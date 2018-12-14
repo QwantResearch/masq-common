@@ -52,8 +52,10 @@ describe('MasqCommon utils', function () {
       chai.assert.equal(err, MasqCommon.errors.ERRORS.WRONGPARAMETER, 'A requried property is missing')
     })
     it('The salt and storedHash must be different for two consecutive call to derivePassphrase even with the same passphrase', async () => {
+      const passphrase = 'secret'
       const hashedPassphrase1 = await MasqCommon.utils.derivePassphrase(passphrase)
       const hashedPassphrase2 = await MasqCommon.utils.derivePassphrase(passphrase)
+
       chai.assert.equal(hashedPassphrase1.salt === hashedPassphrase2.salt, false, 'Two different salt')
       chai.assert.equal(hashedPassphrase1.storedHash === hashedPassphrase2.storedHash, false, 'Two different salt')
     })
@@ -109,7 +111,7 @@ describe('MasqCommon utils', function () {
 
       chai.assert.deepEqual(plaintext, message, 'Must get the initial message after decryption')
     })
-    it('Should generate/encrypt/export/import/decrypt as with raw format for key export', async () => {
+    it('Should generate/encrypt/export/import/decrypt with raw format for key export', async () => {
       const message = { data: 'hello' }
       const key = await MasqCommon.utils.genAESKey()
       const ciphertext = await MasqCommon.utils.encrypt(key, message)
@@ -119,7 +121,7 @@ describe('MasqCommon utils', function () {
 
       chai.assert.deepEqual(plaintext, message, 'Must get the initial message after decryption')
     })
-    it('Should generate/encrypt/export/import/decrypt as with jwk format for key export', async () => {
+    it('Should generate/encrypt/export/import/decrypt with jwk format for key export', async () => {
       const message = { data: 'hello' }
       const key = await MasqCommon.utils.genAESKey()
       const ciphertext = await MasqCommon.utils.encrypt(key, message)

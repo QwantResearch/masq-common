@@ -22,7 +22,7 @@ const _checkPassphrase = (passphrase) => {
 }
 
 const _checkCryptokey = (key) => {
-  if (key.type !== 'secret') {
+  if (!key.type || key.type !== 'secret') {
     throw generateError(ERRORS.NOCRYPTOKEY)
   }
 }
