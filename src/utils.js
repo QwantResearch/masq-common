@@ -84,7 +84,7 @@ const hash256 = (msg, type = 'SHA-256') => {
 const derivePassphrase = (passPhrase) => {
   _checkPassphrase(passPhrase)
   let hashedPassphrase = {}
-  const salt = window.crypto.getRandomValues(new Uint8Array(16))
+  const salt = genRandomBuffer(16)
   const iterations = 100000
   hashedPassphrase.salt = Buffer.from(salt).toString('hex')
   hashedPassphrase.iterations = iterations
