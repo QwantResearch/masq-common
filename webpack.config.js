@@ -5,7 +5,7 @@ module.exports = {
     MasqCommon: './dist/index.js'
   },
   output: {
-    library: "MasqCommon",
+    library: 'MasqCommon'
     // filename: './[name].bundle.js'
   }
 }
