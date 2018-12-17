@@ -65,6 +65,17 @@ describe('MasqCommon utils', function () {
       chai.assert.equal(hashedPassphrase1.salt === hashedPassphrase2.salt, false, 'Two different salt')
       chai.assert.equal(hashedPassphrase1.storedHash === hashedPassphrase2.storedHash, false, 'Two different salt')
     })
+
+    it('Should generate the same derived key if the salt is a UInt8Array or Buffer.from(UInt8array)', async () => {
+      const passphrase = 'secret'
+      const salt1 = MasqCommon.crypto.genRandomBuffer(16)
+      const salt2 = MasqCommon.crypto.getBuffer(salt1)
+
+      const hashedPassphrase1 = await MasqCommon.crypto.derivePassphrase(passphrase, salt1)
+      const hashedPassphrase2 = await MasqCommon.crypto.derivePassphrase(passphrase, salt2)
+      chai.assert.equal(hashedPassphrase1.salt === hashedPassphrase2.salt, true, 'Two identical salt')
+      chai.assert.equal(hashedPassphrase1.storedHash === hashedPassphrase2.storedHash, true, 'Two identical salt')
+    })
   })
 
   context('AES operations and key export/import', () => {

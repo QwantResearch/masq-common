@@ -10,6 +10,16 @@ var genRandomBuffer = function genRandomBuffer() {
 };
 
 /**
+ *  Return a buffer of an UInt8Array
+ *
+ * @param {Uint8Array} arr
+ * @returns {Buffer}
+ */
+var getBuffer = function getBuffer(arr) {
+  return Buffer.from(arr);
+};
+
+/**
  @typedef HashedPassphrase
  @type {Object}
  @property {string} storedHash - The hash of the derived key (format: hex string)
@@ -82,15 +92,15 @@ var hash256 = function hash256(msg) {
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @returns {Promise<HashedPassphrase>}   A promise that contains the derived key
  */
-var derivePassphrase = function derivePassphrase(passPhrase) {
+var derivePassphrase = function derivePassphrase(passPhrase, salt) {
   _checkPassphrase(passPhrase);
   var hashedPassphrase = {};
-  var salt = genRandomBuffer(16);
+  var _salt = salt || genRandomBuffer(16);
   var iterations = 100000;
-  hashedPassphrase.salt = Buffer.from(salt).toString('hex');
+  hashedPassphrase.salt = Buffer.from(_salt).toString('hex');
   hashedPassphrase.iterations = iterations;
   hashedPassphrase.hashAlgo = 'SHA-256';
-  return deriveBitsAndHash(passPhrase, salt, iterations).then(function (hashedValue) {
+  return deriveBitsAndHash(passPhrase, _salt, iterations).then(function (hashedValue) {
     hashedPassphrase.storedHash = Buffer.from(hashedValue).toString('hex');
     return hashedPassphrase;
   }).catch(function (err) {
@@ -272,6 +282,7 @@ module.exports = {
   exportKey: exportKey,
   genAESKey: genAESKey,
   genRandomBuffer: genRandomBuffer,
+  getBuffer: getBuffer,
   checkPassphrase: checkPassphrase,
   derivePassphrase: derivePassphrase
 };
