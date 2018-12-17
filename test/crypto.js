@@ -2,7 +2,7 @@
 /* global MasqCommon */
 /* global chai */
 
-describe('MasqCommon utils', function () {
+describe('MasqCommon crypto', function () {
   context('Generating a random buffer (e.g. iv)', () => {
     it('Should generate a random buffer without length parameter', () => {
       const iv1 = MasqCommon.crypto.genRandomBuffer()
