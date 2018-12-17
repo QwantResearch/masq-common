@@ -5,7 +5,8 @@ var _errors = require('./errors');
 var genRandomBuffer = function genRandomBuffer() {
   var len = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 16;
 
-  return window.crypto.getRandomValues(new Uint8Array(len));
+  var values = window.crypto.getRandomValues(new Uint8Array(len));
+  return Buffer.from(values);
 };
 
 /**

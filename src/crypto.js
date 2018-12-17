@@ -1,7 +1,8 @@
 import { generateError, ERRORS, checkObject } from './errors'
 
 const genRandomBuffer = (len = 16) => {
-  return window.crypto.getRandomValues(new Uint8Array(len))
+  const values = window.crypto.getRandomValues(new Uint8Array(len))
+  return Buffer.from(values)
 }
 
 /**
