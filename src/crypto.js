@@ -105,7 +105,7 @@ const derivePassphrase = (passPhrase, salt) => {
       hashedPassphrase.storedHash = Buffer.from(hashedValue).toString('hex')
       return hashedPassphrase
     })
-    .catch(err => console.log(err)
+    .catch(err => console.err(err)
     )
 }
 
