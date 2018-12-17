@@ -139,7 +139,7 @@ var checkPassphrase = function checkPassphrase(passPhrase, hashedPassphrase) {
    */
 var genAESKey = function genAESKey(extractable, mode, keySize) {
   return window.crypto.subtle.generateKey({
-    name: mode || 'aes-gcm',
+    name: mode || 'AES-GCM',
     length: keySize || 128
   }, extractable || true, ['decrypt', 'encrypt']);
 };
@@ -183,7 +183,7 @@ var importKey = function importKey(key) {
  * @param {Object} cipherContext - The AES cipher parameters
  * @param {ArrayBuffer} cipherContext.iv - The IV
  * @param {string} cipherContext.name - The encryption mode
- * @param {ArrayBuffer} [cipherContext.additionalData] - The non-secret authenticated data (only aes-gcm)
+ * @param {ArrayBuffer} [cipherContext.additionalData] - The non-secret authenticated data (only AES-GCM)
  * @param {ArrayBuffer} [cipherContext.counter] - The counter used for aes-ctr mode
  * @returns {ArrayBuffer} - The decrypted buffer
  */
@@ -202,7 +202,7 @@ var decryptBuffer = function decryptBuffer(data, key, cipherContext) {
  * @param {Object} cipherContext - The AES cipher parameters
  * @param {ArrayBuffer} cipherContext.iv - The IV
  * @param {string} cipherContext.name - The encryption mode
- * @param {ArrayBuffer} [cipherContext.additionalData] - The non-secret authenticated data (only aes-gcm)
+ * @param {ArrayBuffer} [cipherContext.additionalData] - The non-secret authenticated data (only AES-GCM)
  * @param {ArrayBuffer} [cipherContext.counter] - The counter used for aes-ctr mode
  * @returns {ArrayBuffer} - The encrypted buffer
  */
