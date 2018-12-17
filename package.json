@@ -44,7 +44,7 @@
     "utils"
   ],
   "author": "Levent DEMIR",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/QwantResearch/masq-common/issues"
   },
