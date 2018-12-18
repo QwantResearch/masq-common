@@ -7,6 +7,11 @@ const genRandomBuffer = (len = 16) => {
 
 /**
  *  Return a buffer of an UInt8Array
+ *  This is only used for regression test,
+ *  we check if Uint8array and Buffer.from
+ *  have the same behaviour with the webCryptoApi
+ *  Buffer.from is not available (without babelify) in
+ *  the test file.
  *
  * @param {Uint8Array} arr
  * @returns {Buffer}
@@ -23,8 +28,6 @@ const getBuffer = (arr) => {
  @property {sring} salt - The salt used to derive the key (format: hex string)
  @property {Number} iterations - The iteration # used during key derivation
  */
-
-const requiredParameterHashedPassphrase = ['salt', 'iterations', 'storedHash', 'hashAlgo']
 
 const _checkPassphrase = (passphrase) => {
   if (typeof passphrase !== 'string' || passphrase === '') {
@@ -123,6 +126,8 @@ const deriveBitsAndHash = (passPhrase, salt, iterations, hash) => {
     .then(hash256)
 }
 
+const requiredParameterHashedPassphrase = ['salt', 'iterations', 'storedHash', 'hashAlgo']
+
 /**
  * Check a given passphrase by comparing it to the stored hash value (in HashedPassphrase object)
  *
@@ -185,8 +190,8 @@ const importKey = (key, type = 'raw', mode = 'AES-GCM') => {
 /**
  * Decrypt buffer
  *
+ * @param {ArrayBuffer} key - The AES CryptoKey
  * @param {ArrayBuffer} data - Data to decrypt
- * @param {ArrayBuffer} key - The AES key as raw data. 128 or 256 bits
  * @param {Object} cipherContext - The AES cipher parameters
  * @param {ArrayBuffer} cipherContext.iv - The IV
  * @param {string} cipherContext.name - The encryption mode
@@ -194,7 +199,7 @@ const importKey = (key, type = 'raw', mode = 'AES-GCM') => {
  * @param {ArrayBuffer} [cipherContext.counter] - The counter used for aes-ctr mode
  * @returns {ArrayBuffer} - The decrypted buffer
  */
-const decryptBuffer = (data, key, cipherContext) => {
+const decryptBuffer = (key, data, cipherContext) => {
   // TODO: test input params
   return window.crypto.subtle.decrypt(cipherContext, key, data)
     .then(result => new Uint8Array(result))
@@ -203,8 +208,8 @@ const decryptBuffer = (data, key, cipherContext) => {
 /**
  * Encrypt buffer
  *
- * @param {ArrayBuffer} data - Data to encrypt
  * @param {ArrayBuffer} key - The AES CryptoKey
+ * @param {ArrayBuffer} data - Data to encrypt
  * @param {Object} cipherContext - The AES cipher parameters
  * @param {ArrayBuffer} cipherContext.iv - The IV
  * @param {string} cipherContext.name - The encryption mode
@@ -212,7 +217,7 @@ const decryptBuffer = (data, key, cipherContext) => {
  * @param {ArrayBuffer} [cipherContext.counter] - The counter used for aes-ctr mode
  * @returns {ArrayBuffer} - The encrypted buffer
  */
-const encryptBuffer = (data, key, cipherContext) => {
+const encryptBuffer = (key, data, cipherContext) => {
   return window.crypto.subtle.encrypt(cipherContext, key, data)
     .then(result => new Uint8Array(result))
 }
@@ -237,7 +242,7 @@ const encrypt = (key, data, format = 'hex') => {
     name: key.algorithm.name,
     iv: context.iv
   }
-  return encryptBuffer(context.plaintext, key, cipherContext)
+  return encryptBuffer(key, context.plaintext, cipherContext)
     .then(result => {
       return {
         ciphertext: Buffer.from(result).toString(format),
@@ -266,7 +271,7 @@ const decrypt = (key, ciphertext, format = 'hex') => {
     iv: context.iv
   }
 
-  return decryptBuffer(context.ciphertext, key, cipherContext)
+  return decryptBuffer(key, context.ciphertext, cipherContext)
     .then(res => JSON.parse(Buffer.from(res).toString()))
 }
 

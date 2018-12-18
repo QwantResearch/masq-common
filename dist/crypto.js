@@ -11,6 +11,11 @@ var genRandomBuffer = function genRandomBuffer() {
 
 /**
  *  Return a buffer of an UInt8Array
+ *  This is only used for regression test,
+ *  we check if Uint8array and Buffer.from
+ *  have the same behaviour with the webCryptoApi
+ *  Buffer.from is not available (without babelify) in
+ *  the test file.
  *
  * @param {Uint8Array} arr
  * @returns {Buffer}
@@ -27,8 +32,6 @@ var getBuffer = function getBuffer(arr) {
  @property {sring} salt - The salt used to derive the key (format: hex string)
  @property {Number} iterations - The iteration # used during key derivation
  */
-
-var requiredParameterHashedPassphrase = ['salt', 'iterations', 'storedHash', 'hashAlgo'];
 
 var _checkPassphrase = function _checkPassphrase(passphrase) {
   if (typeof passphrase !== 'string' || passphrase === '') {
@@ -121,6 +124,8 @@ var deriveBitsAndHash = function deriveBitsAndHash(passPhrase, salt, iterations,
   return deriveBits(passPhrase, salt, iterations, hash).then(hash256);
 };
 
+var requiredParameterHashedPassphrase = ['salt', 'iterations', 'storedHash', 'hashAlgo'];
+
 /**
  * Check a given passphrase by comparing it to the stored hash value (in HashedPassphrase object)
  *
@@ -189,8 +194,8 @@ var importKey = function importKey(key) {
 /**
  * Decrypt buffer
  *
+ * @param {ArrayBuffer} key - The AES CryptoKey
  * @param {ArrayBuffer} data - Data to decrypt
- * @param {ArrayBuffer} key - The AES key as raw data. 128 or 256 bits
  * @param {Object} cipherContext - The AES cipher parameters
  * @param {ArrayBuffer} cipherContext.iv - The IV
  * @param {string} cipherContext.name - The encryption mode
@@ -198,7 +203,7 @@ var importKey = function importKey(key) {
  * @param {ArrayBuffer} [cipherContext.counter] - The counter used for aes-ctr mode
  * @returns {ArrayBuffer} - The decrypted buffer
  */
-var decryptBuffer = function decryptBuffer(data, key, cipherContext) {
+var decryptBuffer = function decryptBuffer(key, data, cipherContext) {
   // TODO: test input params
   return window.crypto.subtle.decrypt(cipherContext, key, data).then(function (result) {
     return new Uint8Array(result);
@@ -208,8 +213,8 @@ var decryptBuffer = function decryptBuffer(data, key, cipherContext) {
 /**
  * Encrypt buffer
  *
- * @param {ArrayBuffer} data - Data to encrypt
  * @param {ArrayBuffer} key - The AES CryptoKey
+ * @param {ArrayBuffer} data - Data to encrypt
  * @param {Object} cipherContext - The AES cipher parameters
  * @param {ArrayBuffer} cipherContext.iv - The IV
  * @param {string} cipherContext.name - The encryption mode
@@ -217,7 +222,7 @@ var decryptBuffer = function decryptBuffer(data, key, cipherContext) {
  * @param {ArrayBuffer} [cipherContext.counter] - The counter used for aes-ctr mode
  * @returns {ArrayBuffer} - The encrypted buffer
  */
-var encryptBuffer = function encryptBuffer(data, key, cipherContext) {
+var encryptBuffer = function encryptBuffer(key, data, cipherContext) {
   return window.crypto.subtle.encrypt(cipherContext, key, data).then(function (result) {
     return new Uint8Array(result);
   });
@@ -244,7 +249,7 @@ var encrypt = function encrypt(key, data) {
     name: key.algorithm.name,
     iv: context.iv
   };
-  return encryptBuffer(context.plaintext, key, cipherContext).then(function (result) {
+  return encryptBuffer(key, context.plaintext, cipherContext).then(function (result) {
     return {
       ciphertext: Buffer.from(result).toString(format),
       iv: Buffer.from(context.iv).toString(format)
@@ -273,7 +278,7 @@ var decrypt = function decrypt(key, ciphertext) {
     iv: context.iv
   };
 
-  return decryptBuffer(context.ciphertext, key, cipherContext).then(function (res) {
+  return decryptBuffer(key, context.ciphertext, cipherContext).then(function (res) {
     return JSON.parse(Buffer.from(res).toString());
   });
 };
