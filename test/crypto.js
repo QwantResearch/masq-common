@@ -39,13 +39,13 @@ describe('MasqCommon crypto', function () {
     it('Should return true if the given passphrase is the same as the stored one', async () => {
       const hashedPassphrase = await MasqCommon.crypto.derivePassphrase(passphrase)
       const res = await MasqCommon.crypto.checkPassphrase(passphrase, hashedPassphrase)
-      chai.assert.equal(res, true, 'The check operation should return true')
+      chai.assert.isTrue(res, 'The check operation should return true')
     })
 
     it('Should return false if the given passphrase is NOT the same as the stored one', async () => {
       const hashedPassphrase = await MasqCommon.crypto.derivePassphrase(passphrase)
       const res = await MasqCommon.crypto.checkPassphrase(passphrase + 'modifed', hashedPassphrase)
-      chai.assert.equal(res, false, 'The check operation should return false')
+      chai.assert.isFalse(res, 'The check operation should return false')
     })
 
     it('Should reject if the any property of hashedPassphrase is missing or empty', async () => {
@@ -73,8 +73,8 @@ describe('MasqCommon crypto', function () {
 
       const hashedPassphrase1 = await MasqCommon.crypto.derivePassphrase(passphrase, salt1)
       const hashedPassphrase2 = await MasqCommon.crypto.derivePassphrase(passphrase, salt2)
-      chai.assert.equal(hashedPassphrase1.salt === hashedPassphrase2.salt, true, 'Two identical salt')
-      chai.assert.equal(hashedPassphrase1.storedHash === hashedPassphrase2.storedHash, true, 'Two identical salt')
+      chai.assert.isTrue(hashedPassphrase1.salt === hashedPassphrase2.salt, 'Two identical salt')
+      chai.assert.isTrue(hashedPassphrase1.storedHash === hashedPassphrase2.storedHash, 'Two identical hashed Passphrase')
     })
   })
 
@@ -82,7 +82,7 @@ describe('MasqCommon crypto', function () {
     it('Should generate an extractable AES key cryptokey with default settings (AES-GCM 128 bits)', async () => {
       const key = await MasqCommon.crypto.genAESKey()
       chai.assert.equal(key.type, 'secret', 'Secret key')
-      chai.assert.equal(key.extractable, true, 'Key is extractable by default to allow export or wrap')
+      chai.assert.isTrue(key.extractable, 'Key is extractable by default to allow export or wrap')
     })
 
     it('Should generate and export (in raw format by default) an extractable AES key cryptokey with default settings (AES-GCM 128 bits)', async () => {

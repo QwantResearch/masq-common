@@ -104,7 +104,7 @@ var derivePassphrase = function derivePassphrase(passPhrase, salt) {
     hashedPassphrase.storedHash = Buffer.from(hashedValue).toString('hex');
     return hashedPassphrase;
   }).catch(function (err) {
-    return console.log(err);
+    return console.err(err);
   });
 };
 
