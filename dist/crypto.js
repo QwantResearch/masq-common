@@ -260,7 +260,7 @@ var genAESKey = function genAESKey(extractable, mode, keySize) {
   *
   * @param {CryptoKey} key - The CryptoKey
   * @param {string} [type] - The type of the exported key
-  * @returns {arrayBuffer|Object} - The raw key or the key as a jwk format
+  * @returns {Promise<arrayBuffer>} - The raw key or the key as a jwk format
   */
 var exportKey = function () {
   var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(key) {
@@ -305,7 +305,7 @@ var exportKey = function () {
   * @param {arrayBuffer|Object} key - The key
   * @param {string} [type] - The type of the key to import ('raw', 'jwk')
   * @param {string} [mode] - The mode of the key to import (default 'AES-GCM')
-  * @returns {arrayBuffer|Object} - The cryptoKey
+  * @returns {Promise<arrayBuffer>} - The cryptoKey
   */
 var importKey = function importKey(key) {
   var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'raw';
@@ -324,7 +324,7 @@ var importKey = function importKey(key) {
  * @param {string} cipherContext.name - The encryption mode
  * @param {ArrayBuffer} [cipherContext.additionalData] - The non-secret authenticated data (only AES-GCM)
  * @param {ArrayBuffer} [cipherContext.counter] - The counter used for aes-ctr mode
- * @returns {ArrayBuffer} - The decrypted buffer
+ * @returns {Promise<ArrayBuffer>} - The decrypted buffer
  */
 var decryptBuffer = function () {
   var _ref6 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee6(key, data, cipherContext) {

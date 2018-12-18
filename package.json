@@ -2,7 +2,10 @@
   "name": "masq-common",
   "version": "1.0.0",
   "description": "Common functions for Masq",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "babel ./src/ --presets env --out-dir dist/ && webpack --mode development",
     "test": "eslint test/*.js && npm run build && mocha-headless-chrome -f ./test/index.html -a no-sandbox -a disable-setuid-sandbox",
