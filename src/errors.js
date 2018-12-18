@@ -19,7 +19,8 @@ const ERRORS = {
   NOCRYPTOKEY: 'Not a cryptokey',
   ENCRYPTIONERROR: 'Encryption error',
   DECRYPTIONERROR: 'Decryption error',
-  NOIMPORTRULES: 'No import rules provided'
+  NOIMPORTRULES: 'No import rules provided',
+  WRONG_LOGIN_URL: 'Wrong url provided'
 }
 
 /**
