@@ -5,7 +5,8 @@ const rai = require('random-access-idb')
 module.exports = {
   dbReady,
   dbExists,
-  createPromisifiedHyperDB
+  createPromisifiedHyperDB,
+  getHashParams
 }
 
 function createPromisifiedHyperDB (name, hexKey) {
@@ -39,4 +40,23 @@ function dbExists (dbName) {
       reject(err)
     }
   })
+}
+
+function getHashParams (link) {
+  const url = new URL(link)
+  const hash = url.hash.slice(2)
+  const hashParamsArr = JSON.parse(Buffer.from(hash, 'base64').toString('utf8'))
+  if (typeof hashParamsArr === 'array'
+    || hashParamsArr.length !== 4) {
+
+      throw new Error('Wrong login URL')
+  }
+  const hashParamsObj = {
+    appName: hashParamsArr[0],
+    requestType: hashParamsArr[1],
+    channel: hashParamsArr[2],
+    key: hashParamsArr[3]
+  }
+  hashParamsObj.key = Buffer.from(hashParamsObj.key, 'base64')
+  return hashParamsObj
 }
