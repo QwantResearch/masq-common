@@ -159,7 +159,7 @@ const genAESKey = (extractable, mode, keySize) => {
   *
   * @param {CryptoKey} key - The CryptoKey
   * @param {string} [type] - The type of the exported key
-  * @returns {arrayBuffer|Object} - The raw key or the key as a jwk format
+  * @returns {Promise<arrayBuffer>} - The raw key or the key as a jwk format
   */
 const exportKey = async (key, type = 'raw') => {
   const exportedKey = await window.crypto.subtle.exportKey(type, key)
@@ -173,7 +173,7 @@ const exportKey = async (key, type = 'raw') => {
   * @param {arrayBuffer|Object} key - The key
   * @param {string} [type] - The type of the key to import ('raw', 'jwk')
   * @param {string} [mode] - The mode of the key to import (default 'AES-GCM')
-  * @returns {arrayBuffer|Object} - The cryptoKey
+  * @returns {Promise<arrayBuffer>} - The cryptoKey
   */
 const importKey = (key, type = 'raw', mode = 'AES-GCM') => {
   return window.crypto.subtle.importKey(type, key, { name: mode }
@@ -190,7 +190,7 @@ const importKey = (key, type = 'raw', mode = 'AES-GCM') => {
  * @param {string} cipherContext.name - The encryption mode
  * @param {ArrayBuffer} [cipherContext.additionalData] - The non-secret authenticated data (only AES-GCM)
  * @param {ArrayBuffer} [cipherContext.counter] - The counter used for aes-ctr mode
- * @returns {ArrayBuffer} - The decrypted buffer
+ * @returns {Promise<ArrayBuffer>} - The decrypted buffer
  */
 const decryptBuffer = async (key, data, cipherContext) => {
   // TODO: test input params
