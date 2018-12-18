@@ -1,2 +1,2 @@
 # masq-common
-Utils functions ued in Masq
+Utils functions used in Masq
