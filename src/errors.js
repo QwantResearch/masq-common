@@ -61,10 +61,8 @@ const checkObject = (obj, parameters) => {
    */
 const generateError = (name, message, status) => {
   let err = {
-    name: name || '',
-    message: message || '',
-    status: status || '',
-    error: true
+    name: name || 'Unknown error',
+    message: message || ''
   }
   return err
 }
