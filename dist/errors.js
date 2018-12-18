@@ -62,10 +62,9 @@ var ERRORS = {
    */
 var generateError = function generateError(name, message, status) {
   var err = {
-    name: name || '',
+    name: name || 'Unknown error',
     message: message || '',
-    status: status || '',
-    error: true
+    status: status || ''
   };
   return err;
 };

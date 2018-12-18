@@ -79,14 +79,14 @@ const deriveBits = (passPhrase, salt, iterations, hash) => {
  * @param {string} [type] The hash name (SHA-256 by default)
  * @returns {Promise<Uint8Array>}   A promise that contains the hash as a Uint8Array
  */
-const hash256 = (msg, type = 'SHA-256') => {
-  return window.crypto.subtle.digest(
+const hash256 = async (msg, type = 'SHA-256') => {
+  const digest = await window.crypto.subtle.digest(
     {
       name: 'SHA-256'
     },
     (typeof msg === 'string') ? Buffer.from(msg) : msg
   )
-    .then(digest => new Uint8Array(digest))
+  return new Uint8Array(digest)
 }
 
 /**
@@ -95,21 +95,17 @@ const hash256 = (msg, type = 'SHA-256') => {
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @returns {Promise<HashedPassphrase>}   A promise that contains the derived key
  */
-const derivePassphrase = (passPhrase, salt) => {
+const derivePassphrase = async (passPhrase, salt) => {
   _checkPassphrase(passPhrase)
   const _salt = salt || genRandomBuffer(16)
   const iterations = 100000
-  return deriveBitsAndHash(passPhrase, _salt, iterations)
-    .then(hashedValue => {
-      return {
-        salt: Buffer.from(_salt).toString('hex'),
-        iterations: iterations,
-        hashAlgo: 'SHA-256',
-        storedHash: Buffer.from(hashedValue).toString('hex')
-      }
-    })
-    .catch(err => console.err(err)
-    )
+  const hashedValue = await deriveBitsAndHash(passPhrase, _salt, iterations)
+  return {
+    salt: Buffer.from(_salt).toString('hex'),
+    iterations: iterations,
+    hashAlgo: 'SHA-256',
+    storedHash: Buffer.from(hashedValue).toString('hex')
+  }
 }
 
 /**
@@ -121,9 +117,10 @@ const derivePassphrase = (passPhrase, salt) => {
  * @param {string} [hash] The hash function used for derivation and final hash computing
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
-const deriveBitsAndHash = (passPhrase, salt, iterations, hash) => {
-  return deriveBits(passPhrase, salt, iterations, hash)
-    .then(hash256)
+const deriveBitsAndHash = async (passPhrase, salt, iterations, hash) => {
+  const derivedPassphrase = await deriveBits(passPhrase, salt, iterations, hash)
+  const finalHash = await hash256(derivedPassphrase)
+  return finalHash
 }
 
 const requiredParameterHashedPassphrase = ['salt', 'iterations', 'storedHash', 'hashAlgo']
@@ -135,14 +132,12 @@ const requiredParameterHashedPassphrase = ['salt', 'iterations', 'storedHash', '
  * @param {HashedPassphrase} hashedPassphrase The HashedPassphrase object
  * @returns {Promise<Boolean>}   A promise
  */
-const checkPassphrase = (passPhrase, hashedPassphrase) => {
+const checkPassphrase = async (passPhrase, hashedPassphrase) => {
   _checkPassphrase(passPhrase)
   checkObject(hashedPassphrase, requiredParameterHashedPassphrase)
   const { salt, iterations, storedHash, hashAlgo } = hashedPassphrase
-  return deriveBitsAndHash(passPhrase, Buffer.from(salt, 'hex'), iterations, hashAlgo)
-    .then(hashedValue => {
-      return Buffer.from(hashedValue).toString('hex') === storedHash
-    })
+  const hashCandidate = await deriveBitsAndHash(passPhrase, Buffer.from(salt, 'hex'), iterations, hashAlgo)
+  return Buffer.from(hashCandidate).toString('hex') === storedHash
 }
 
 /**
@@ -150,7 +145,7 @@ const checkPassphrase = (passPhrase, hashedPassphrase) => {
    * @param {boolean} [extractable] - Specify if the generated key is extractable
    * @param {string} [mode] - The aes mode of the generated key
    * @param {Number} [keySize] - Specify if the generated key is extractable
-   * @returns {CryptoKey} - The generated AES key.
+   * @returns {Promise<CryptoKey>} - The generated AES key.
    */
 const genAESKey = (extractable, mode, keySize) => {
   return window.crypto.subtle.generateKey({
@@ -166,12 +161,10 @@ const genAESKey = (extractable, mode, keySize) => {
   * @param {string} [type] - The type of the exported key
   * @returns {arrayBuffer|Object} - The raw key or the key as a jwk format
   */
-const exportKey = (key, type = 'raw') => {
-  return window.crypto.subtle.exportKey(type, key)
-    .then(key => {
-      if (type === 'raw') return new Uint8Array(key)
-      return key
-    })
+const exportKey = async (key, type = 'raw') => {
+  const exportedKey = await window.crypto.subtle.exportKey(type, key)
+  if (type === 'raw') return new Uint8Array(exportedKey)
+  return exportedKey
 }
 
 /**
@@ -199,10 +192,10 @@ const importKey = (key, type = 'raw', mode = 'AES-GCM') => {
  * @param {ArrayBuffer} [cipherContext.counter] - The counter used for aes-ctr mode
  * @returns {ArrayBuffer} - The decrypted buffer
  */
-const decryptBuffer = (key, data, cipherContext) => {
+const decryptBuffer = async (key, data, cipherContext) => {
   // TODO: test input params
-  return window.crypto.subtle.decrypt(cipherContext, key, data)
-    .then(result => new Uint8Array(result))
+  const decrypted = await window.crypto.subtle.decrypt(cipherContext, key, data)
+  return new Uint8Array(decrypted)
 }
 
 /**
@@ -217,9 +210,9 @@ const decryptBuffer = (key, data, cipherContext) => {
  * @param {ArrayBuffer} [cipherContext.counter] - The counter used for aes-ctr mode
  * @returns {ArrayBuffer} - The encrypted buffer
  */
-const encryptBuffer = (key, data, cipherContext) => {
-  return window.crypto.subtle.encrypt(cipherContext, key, data)
-    .then(result => new Uint8Array(result))
+const encryptBuffer = async (key, data, cipherContext) => {
+  const encrypted = await window.crypto.subtle.encrypt(cipherContext, key, data)
+  return new Uint8Array(encrypted)
 }
 
 /**
@@ -230,7 +223,7 @@ const encryptBuffer = (key, data, cipherContext) => {
  * @param {string} [format] - The ciphertext and iv encoding format
  * @returns {Object} - The stringified ciphertext object (ciphertext and iv)
  */
-const encrypt = (key, data, format = 'hex') => {
+const encrypt = async (key, data, format = 'hex') => {
   _checkCryptokey(key)
   let context = {
     iv: genRandomBuffer(16),
@@ -242,13 +235,11 @@ const encrypt = (key, data, format = 'hex') => {
     name: key.algorithm.name,
     iv: context.iv
   }
-  return encryptBuffer(key, context.plaintext, cipherContext)
-    .then(result => {
-      return {
-        ciphertext: Buffer.from(result).toString(format),
-        iv: Buffer.from(context.iv).toString(format)
-      }
-    })
+  const encrypted = await encryptBuffer(key, context.plaintext, cipherContext)
+  return {
+    ciphertext: Buffer.from(encrypted).toString(format),
+    iv: Buffer.from(context.iv).toString(format)
+  }
 }
 
 /**
@@ -258,7 +249,7 @@ const encrypt = (key, data, format = 'hex') => {
  * @param {string | Object} - The data to encrypt
  * @param {string} [format] - The ciphertext and iv encoding format
  */
-const decrypt = (key, ciphertext, format = 'hex') => {
+const decrypt = async (key, ciphertext, format = 'hex') => {
   _checkCryptokey(key)
   let context = {
     ciphertext: ciphertext.hasOwnProperty('ciphertext') ? Buffer.from(ciphertext.ciphertext, (format)) : '',
@@ -271,8 +262,8 @@ const decrypt = (key, ciphertext, format = 'hex') => {
     iv: context.iv
   }
 
-  return decryptBuffer(key, context.ciphertext, cipherContext)
-    .then(res => JSON.parse(Buffer.from(res).toString()))
+  const decrypted = await decryptBuffer(key, context.ciphertext, cipherContext)
+  return JSON.parse(Buffer.from(decrypted).toString())
 }
 
 module.exports = {
