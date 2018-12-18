@@ -94,15 +94,15 @@ var hash256 = function hash256(msg) {
  */
 var derivePassphrase = function derivePassphrase(passPhrase, salt) {
   _checkPassphrase(passPhrase);
-  var hashedPassphrase = {};
   var _salt = salt || genRandomBuffer(16);
   var iterations = 100000;
-  hashedPassphrase.salt = Buffer.from(_salt).toString('hex');
-  hashedPassphrase.iterations = iterations;
-  hashedPassphrase.hashAlgo = 'SHA-256';
   return deriveBitsAndHash(passPhrase, _salt, iterations).then(function (hashedValue) {
-    hashedPassphrase.storedHash = Buffer.from(hashedValue).toString('hex');
-    return hashedPassphrase;
+    return {
+      salt: Buffer.from(_salt).toString('hex'),
+      iterations: iterations,
+      hashAlgo: 'SHA-256',
+      storedHash: Buffer.from(hashedValue).toString('hex')
+    };
   }).catch(function (err) {
     return console.err(err);
   });
@@ -235,14 +235,15 @@ var encrypt = function encrypt(key, data) {
   var format = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'hex';
 
   _checkCryptokey(key);
-  var context = {};
-  var cipherContext = {};
-  context.iv = genRandomBuffer(16);
-  context.plaintext = Buffer.from(JSON.stringify(data));
+  var context = {
+    iv: genRandomBuffer(16),
+    plaintext: Buffer.from(JSON.stringify(data))
 
-  // Prepare cipher context, depends on cipher mode
-  cipherContext.name = key.algorithm.name;
-  cipherContext.iv = context.iv;
+    // Prepare cipher context, depends on cipher mode
+  };var cipherContext = {
+    name: key.algorithm.name,
+    iv: context.iv
+  };
   return encryptBuffer(context.plaintext, key, cipherContext).then(function (result) {
     return {
       ciphertext: Buffer.from(result).toString(format),
@@ -262,14 +263,16 @@ var decrypt = function decrypt(key, ciphertext) {
   var format = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'hex';
 
   _checkCryptokey(key);
-  var context = {};
-  var cipherContext = {};
-  context.ciphertext = ciphertext.hasOwnProperty('ciphertext') ? Buffer.from(ciphertext.ciphertext, format) : '';
-  // IV is 128 bits long === 16 bytes
-  context.iv = ciphertext.hasOwnProperty('iv') ? Buffer.from(ciphertext.iv, format) : '';
-  // Prepare cipher context, depends on cipher mode
-  cipherContext.name = key.algorithm.name;
-  cipherContext.iv = context.iv;
+  var context = {
+    ciphertext: ciphertext.hasOwnProperty('ciphertext') ? Buffer.from(ciphertext.ciphertext, format) : '',
+    // IV is 128 bits long === 16 bytes
+    iv: ciphertext.hasOwnProperty('iv') ? Buffer.from(ciphertext.iv, format) : ''
+    // Prepare cipher context, depends on cipher mode
+  };var cipherContext = {
+    name: key.algorithm.name,
+    iv: context.iv
+  };
+
   return decryptBuffer(context.ciphertext, key, cipherContext).then(function (res) {
     return JSON.parse(Buffer.from(res).toString());
   });

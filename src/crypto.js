@@ -94,16 +94,16 @@ const hash256 = (msg, type = 'SHA-256') => {
  */
 const derivePassphrase = (passPhrase, salt) => {
   _checkPassphrase(passPhrase)
-  let hashedPassphrase = {}
   const _salt = salt || genRandomBuffer(16)
   const iterations = 100000
-  hashedPassphrase.salt = Buffer.from(_salt).toString('hex')
-  hashedPassphrase.iterations = iterations
-  hashedPassphrase.hashAlgo = 'SHA-256'
   return deriveBitsAndHash(passPhrase, _salt, iterations)
     .then(hashedValue => {
-      hashedPassphrase.storedHash = Buffer.from(hashedValue).toString('hex')
-      return hashedPassphrase
+      return {
+        salt: Buffer.from(_salt).toString('hex'),
+        iterations: iterations,
+        hashAlgo: 'SHA-256',
+        storedHash: Buffer.from(hashedValue).toString('hex')
+      }
     })
     .catch(err => console.err(err)
     )
@@ -227,14 +227,16 @@ const encryptBuffer = (data, key, cipherContext) => {
  */
 const encrypt = (key, data, format = 'hex') => {
   _checkCryptokey(key)
-  let context = {}
-  let cipherContext = {}
-  context.iv = genRandomBuffer(16)
-  context.plaintext = Buffer.from(JSON.stringify(data))
+  let context = {
+    iv: genRandomBuffer(16),
+    plaintext: Buffer.from(JSON.stringify(data))
+  }
 
   // Prepare cipher context, depends on cipher mode
-  cipherContext.name = key.algorithm.name
-  cipherContext.iv = context.iv
+  let cipherContext = {
+    name: key.algorithm.name,
+    iv: context.iv
+  }
   return encryptBuffer(context.plaintext, key, cipherContext)
     .then(result => {
       return {
@@ -253,14 +255,17 @@ const encrypt = (key, data, format = 'hex') => {
  */
 const decrypt = (key, ciphertext, format = 'hex') => {
   _checkCryptokey(key)
-  let context = {}
-  let cipherContext = {}
-  context.ciphertext = ciphertext.hasOwnProperty('ciphertext') ? Buffer.from(ciphertext.ciphertext, (format)) : ''
-  // IV is 128 bits long === 16 bytes
-  context.iv = ciphertext.hasOwnProperty('iv') ? Buffer.from(ciphertext.iv, (format)) : ''
+  let context = {
+    ciphertext: ciphertext.hasOwnProperty('ciphertext') ? Buffer.from(ciphertext.ciphertext, (format)) : '',
+    // IV is 128 bits long === 16 bytes
+    iv: ciphertext.hasOwnProperty('iv') ? Buffer.from(ciphertext.iv, (format)) : ''
+  }
   // Prepare cipher context, depends on cipher mode
-  cipherContext.name = key.algorithm.name
-  cipherContext.iv = context.iv
+  let cipherContext = {
+    name: key.algorithm.name,
+    iv: context.iv
+  }
+
   return decryptBuffer(context.ciphertext, key, cipherContext)
     .then(res => JSON.parse(Buffer.from(res).toString()))
 }
