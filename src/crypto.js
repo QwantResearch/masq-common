@@ -50,26 +50,25 @@ const _checkCryptokey = (key) => {
  * @param {string} [hash] The hash function used for derivation
  * @returns {Promise<Uint8Array>}   A promise that contains the derived key
  */
-const deriveBits = (passPhrase, salt, iterations, hash) => {
+const deriveBits = async (passPhrase, salt, iterations, hash) => {
   // Always specify a strong salt
   if (iterations < 10000) { console.warn('The iteration number is less than 10000, increase it !') }
 
-  return window.crypto.subtle.importKey(
+  const baseKey = await window.crypto.subtle.importKey(
     'raw',
     (typeof passPhrase === 'string') ? Buffer.from(passPhrase) : passPhrase,
     'PBKDF2',
     false,
     ['deriveBits', 'deriveKey']
   )
-    .then(baseKey => {
-      return window.crypto.subtle.deriveBits({
-        name: 'PBKDF2',
-        salt: salt || new Uint8Array([]),
-        iterations: iterations || 100000,
-        hash: hash || 'SHA-256'
-      }, baseKey, 128)
-    })
-    .then(derivedKey => new Uint8Array(derivedKey))
+  const derivedKey = await window.crypto.subtle.deriveBits({
+    name: 'PBKDF2',
+    salt: salt || new Uint8Array([]),
+    iterations: iterations || 100000,
+    hash: hash || 'SHA-256'
+  }, baseKey, 128)
+
+  return new Uint8Array(derivedKey)
 }
 
 /**

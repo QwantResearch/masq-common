@@ -64,23 +64,47 @@ var _checkCryptokey = function _checkCryptokey(key) {
  * @param {string} [hash] The hash function used for derivation
  * @returns {Promise<Uint8Array>}   A promise that contains the derived key
  */
-var deriveBits = function deriveBits(passPhrase, salt, iterations, hash) {
-  // Always specify a strong salt
-  if (iterations < 10000) {
-    console.warn('The iteration number is less than 10000, increase it !');
-  }
+var deriveBits = function () {
+  var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(passPhrase, salt, iterations, hash) {
+    var baseKey, derivedKey;
+    return _regenerator2.default.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            // Always specify a strong salt
+            if (iterations < 10000) {
+              console.warn('The iteration number is less than 10000, increase it !');
+            }
 
-  return window.crypto.subtle.importKey('raw', typeof passPhrase === 'string' ? Buffer.from(passPhrase) : passPhrase, 'PBKDF2', false, ['deriveBits', 'deriveKey']).then(function (baseKey) {
-    return window.crypto.subtle.deriveBits({
-      name: 'PBKDF2',
-      salt: salt || new Uint8Array([]),
-      iterations: iterations || 100000,
-      hash: hash || 'SHA-256'
-    }, baseKey, 128);
-  }).then(function (derivedKey) {
-    return new Uint8Array(derivedKey);
-  });
-};
+            _context.next = 3;
+            return window.crypto.subtle.importKey('raw', typeof passPhrase === 'string' ? Buffer.from(passPhrase) : passPhrase, 'PBKDF2', false, ['deriveBits', 'deriveKey']);
+
+          case 3:
+            baseKey = _context.sent;
+            _context.next = 6;
+            return window.crypto.subtle.deriveBits({
+              name: 'PBKDF2',
+              salt: salt || new Uint8Array([]),
+              iterations: iterations || 100000,
+              hash: hash || 'SHA-256'
+            }, baseKey, 128);
+
+          case 6:
+            derivedKey = _context.sent;
+            return _context.abrupt('return', new Uint8Array(derivedKey));
+
+          case 8:
+          case 'end':
+            return _context.stop();
+        }
+      }
+    }, _callee, undefined);
+  }));
+
+  return function deriveBits(_x2, _x3, _x4, _x5) {
+    return _ref.apply(this, arguments);
+  };
+}();
 
 /**
  * Hash of a string or arrayBuffer
@@ -90,32 +114,32 @@ var deriveBits = function deriveBits(passPhrase, salt, iterations, hash) {
  * @returns {Promise<Uint8Array>}   A promise that contains the hash as a Uint8Array
  */
 var hash256 = function () {
-  var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(msg) {
+  var _ref2 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee2(msg) {
     var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'SHA-256';
     var digest;
-    return _regenerator2.default.wrap(function _callee$(_context) {
+    return _regenerator2.default.wrap(function _callee2$(_context2) {
       while (1) {
-        switch (_context.prev = _context.next) {
+        switch (_context2.prev = _context2.next) {
           case 0:
-            _context.next = 2;
+            _context2.next = 2;
             return window.crypto.subtle.digest({
               name: 'SHA-256'
             }, typeof msg === 'string' ? Buffer.from(msg) : msg);
 
           case 2:
-            digest = _context.sent;
-            return _context.abrupt('return', new Uint8Array(digest));
+            digest = _context2.sent;
+            return _context2.abrupt('return', new Uint8Array(digest));
 
           case 4:
           case 'end':
-            return _context.stop();
+            return _context2.stop();
         }
       }
-    }, _callee, undefined);
+    }, _callee2, undefined);
   }));
 
-  return function hash256(_x3) {
-    return _ref.apply(this, arguments);
+  return function hash256(_x7) {
+    return _ref2.apply(this, arguments);
   };
 }();
 
@@ -126,22 +150,22 @@ var hash256 = function () {
  * @returns {Promise<HashedPassphrase>}   A promise that contains the derived key
  */
 var derivePassphrase = function () {
-  var _ref2 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee2(passPhrase, salt) {
+  var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(passPhrase, salt) {
     var _salt, iterations, hashedValue;
 
-    return _regenerator2.default.wrap(function _callee2$(_context2) {
+    return _regenerator2.default.wrap(function _callee3$(_context3) {
       while (1) {
-        switch (_context2.prev = _context2.next) {
+        switch (_context3.prev = _context3.next) {
           case 0:
             _checkPassphrase(passPhrase);
             _salt = salt || genRandomBuffer(16);
             iterations = 100000;
-            _context2.next = 5;
+            _context3.next = 5;
             return deriveBitsAndHash(passPhrase, _salt, iterations);
 
           case 5:
-            hashedValue = _context2.sent;
-            return _context2.abrupt('return', {
+            hashedValue = _context3.sent;
+            return _context3.abrupt('return', {
               salt: Buffer.from(_salt).toString('hex'),
               iterations: iterations,
               hashAlgo: 'SHA-256',
@@ -150,14 +174,14 @@ var derivePassphrase = function () {
 
           case 7:
           case 'end':
-            return _context2.stop();
+            return _context3.stop();
         }
       }
-    }, _callee2, undefined);
+    }, _callee3, undefined);
   }));
 
-  return function derivePassphrase(_x4, _x5) {
-    return _ref2.apply(this, arguments);
+  return function derivePassphrase(_x8, _x9) {
+    return _ref3.apply(this, arguments);
   };
 }();
 
@@ -171,34 +195,34 @@ var derivePassphrase = function () {
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
 var deriveBitsAndHash = function () {
-  var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(passPhrase, salt, iterations, hash) {
+  var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(passPhrase, salt, iterations, hash) {
     var derivedPassphrase, finalHash;
-    return _regenerator2.default.wrap(function _callee3$(_context3) {
+    return _regenerator2.default.wrap(function _callee4$(_context4) {
       while (1) {
-        switch (_context3.prev = _context3.next) {
+        switch (_context4.prev = _context4.next) {
           case 0:
-            _context3.next = 2;
+            _context4.next = 2;
             return deriveBits(passPhrase, salt, iterations, hash);
 
           case 2:
-            derivedPassphrase = _context3.sent;
-            _context3.next = 5;
+            derivedPassphrase = _context4.sent;
+            _context4.next = 5;
             return hash256(derivedPassphrase);
 
           case 5:
-            finalHash = _context3.sent;
-            return _context3.abrupt('return', finalHash);
+            finalHash = _context4.sent;
+            return _context4.abrupt('return', finalHash);
 
           case 7:
           case 'end':
-            return _context3.stop();
+            return _context4.stop();
         }
       }
-    }, _callee3, undefined);
+    }, _callee4, undefined);
   }));
 
-  return function deriveBitsAndHash(_x6, _x7, _x8, _x9) {
-    return _ref3.apply(this, arguments);
+  return function deriveBitsAndHash(_x10, _x11, _x12, _x13) {
+    return _ref4.apply(this, arguments);
   };
 }();
 
@@ -212,32 +236,32 @@ var requiredParameterHashedPassphrase = ['salt', 'iterations', 'storedHash', 'ha
  * @returns {Promise<Boolean>}   A promise
  */
 var checkPassphrase = function () {
-  var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(passPhrase, hashedPassphrase) {
+  var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(passPhrase, hashedPassphrase) {
     var salt, iterations, storedHash, hashAlgo, hashCandidate;
-    return _regenerator2.default.wrap(function _callee4$(_context4) {
+    return _regenerator2.default.wrap(function _callee5$(_context5) {
       while (1) {
-        switch (_context4.prev = _context4.next) {
+        switch (_context5.prev = _context5.next) {
           case 0:
             _checkPassphrase(passPhrase);
             (0, _errors.checkObject)(hashedPassphrase, requiredParameterHashedPassphrase);
             salt = hashedPassphrase.salt, iterations = hashedPassphrase.iterations, storedHash = hashedPassphrase.storedHash, hashAlgo = hashedPassphrase.hashAlgo;
-            _context4.next = 5;
+            _context5.next = 5;
             return deriveBitsAndHash(passPhrase, Buffer.from(salt, 'hex'), iterations, hashAlgo);
 
           case 5:
-            hashCandidate = _context4.sent;
-            return _context4.abrupt('return', Buffer.from(hashCandidate).toString('hex') === storedHash);
+            hashCandidate = _context5.sent;
+            return _context5.abrupt('return', Buffer.from(hashCandidate).toString('hex') === storedHash);
 
           case 7:
           case 'end':
-            return _context4.stop();
+            return _context5.stop();
         }
       }
-    }, _callee4, undefined);
+    }, _callee5, undefined);
   }));
 
-  return function checkPassphrase(_x10, _x11) {
-    return _ref4.apply(this, arguments);
+  return function checkPassphrase(_x14, _x15) {
+    return _ref5.apply(this, arguments);
   };
 }();
 
@@ -263,39 +287,39 @@ var genAESKey = function genAESKey(extractable, mode, keySize) {
   * @returns {Promise<arrayBuffer>} - The raw key or the key as a jwk format
   */
 var exportKey = function () {
-  var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(key) {
+  var _ref6 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee6(key) {
     var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'raw';
     var exportedKey;
-    return _regenerator2.default.wrap(function _callee5$(_context5) {
+    return _regenerator2.default.wrap(function _callee6$(_context6) {
       while (1) {
-        switch (_context5.prev = _context5.next) {
+        switch (_context6.prev = _context6.next) {
           case 0:
-            _context5.next = 2;
+            _context6.next = 2;
             return window.crypto.subtle.exportKey(type, key);
 
           case 2:
-            exportedKey = _context5.sent;
+            exportedKey = _context6.sent;
 
             if (!(type === 'raw')) {
-              _context5.next = 5;
+              _context6.next = 5;
               break;
             }
 
-            return _context5.abrupt('return', new Uint8Array(exportedKey));
+            return _context6.abrupt('return', new Uint8Array(exportedKey));
 
           case 5:
-            return _context5.abrupt('return', exportedKey);
+            return _context6.abrupt('return', exportedKey);
 
           case 6:
           case 'end':
-            return _context5.stop();
+            return _context6.stop();
         }
       }
-    }, _callee5, undefined);
+    }, _callee6, undefined);
   }));
 
-  return function exportKey(_x13) {
-    return _ref5.apply(this, arguments);
+  return function exportKey(_x17) {
+    return _ref6.apply(this, arguments);
   };
 }();
 
@@ -327,29 +351,29 @@ var importKey = function importKey(key) {
  * @returns {Promise<ArrayBuffer>} - The decrypted buffer
  */
 var decryptBuffer = function () {
-  var _ref6 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee6(key, data, cipherContext) {
+  var _ref7 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee7(key, data, cipherContext) {
     var decrypted;
-    return _regenerator2.default.wrap(function _callee6$(_context6) {
+    return _regenerator2.default.wrap(function _callee7$(_context7) {
       while (1) {
-        switch (_context6.prev = _context6.next) {
+        switch (_context7.prev = _context7.next) {
           case 0:
-            _context6.next = 2;
+            _context7.next = 2;
             return window.crypto.subtle.decrypt(cipherContext, key, data);
 
           case 2:
-            decrypted = _context6.sent;
-            return _context6.abrupt('return', new Uint8Array(decrypted));
+            decrypted = _context7.sent;
+            return _context7.abrupt('return', new Uint8Array(decrypted));
 
           case 4:
           case 'end':
-            return _context6.stop();
+            return _context7.stop();
         }
       }
-    }, _callee6, undefined);
+    }, _callee7, undefined);
   }));
 
-  return function decryptBuffer(_x16, _x17, _x18) {
-    return _ref6.apply(this, arguments);
+  return function decryptBuffer(_x20, _x21, _x22) {
+    return _ref7.apply(this, arguments);
   };
 }();
 
@@ -366,29 +390,29 @@ var decryptBuffer = function () {
  * @returns {ArrayBuffer} - The encrypted buffer
  */
 var encryptBuffer = function () {
-  var _ref7 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee7(key, data, cipherContext) {
+  var _ref8 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee8(key, data, cipherContext) {
     var encrypted;
-    return _regenerator2.default.wrap(function _callee7$(_context7) {
+    return _regenerator2.default.wrap(function _callee8$(_context8) {
       while (1) {
-        switch (_context7.prev = _context7.next) {
+        switch (_context8.prev = _context8.next) {
           case 0:
-            _context7.next = 2;
+            _context8.next = 2;
             return window.crypto.subtle.encrypt(cipherContext, key, data);
 
           case 2:
-            encrypted = _context7.sent;
-            return _context7.abrupt('return', new Uint8Array(encrypted));
+            encrypted = _context8.sent;
+            return _context8.abrupt('return', new Uint8Array(encrypted));
 
           case 4:
           case 'end':
-            return _context7.stop();
+            return _context8.stop();
         }
       }
-    }, _callee7, undefined);
+    }, _callee8, undefined);
   }));
 
-  return function encryptBuffer(_x19, _x20, _x21) {
-    return _ref7.apply(this, arguments);
+  return function encryptBuffer(_x23, _x24, _x25) {
+    return _ref8.apply(this, arguments);
   };
 }();
 
@@ -401,12 +425,12 @@ var encryptBuffer = function () {
  * @returns {Object} - The stringified ciphertext object (ciphertext and iv)
  */
 var encrypt = function () {
-  var _ref8 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee8(key, data) {
+  var _ref9 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee9(key, data) {
     var format = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'hex';
     var context, cipherContext, encrypted;
-    return _regenerator2.default.wrap(function _callee8$(_context8) {
+    return _regenerator2.default.wrap(function _callee9$(_context9) {
       while (1) {
-        switch (_context8.prev = _context8.next) {
+        switch (_context9.prev = _context9.next) {
           case 0:
             _checkCryptokey(key);
             context = {
@@ -419,26 +443,26 @@ var encrypt = function () {
               name: key.algorithm.name,
               iv: context.iv
             };
-            _context8.next = 5;
+            _context9.next = 5;
             return encryptBuffer(key, context.plaintext, cipherContext);
 
           case 5:
-            encrypted = _context8.sent;
-            return _context8.abrupt('return', {
+            encrypted = _context9.sent;
+            return _context9.abrupt('return', {
               ciphertext: Buffer.from(encrypted).toString(format),
               iv: Buffer.from(context.iv).toString(format)
             });
 
           case 7:
           case 'end':
-            return _context8.stop();
+            return _context9.stop();
         }
       }
-    }, _callee8, undefined);
+    }, _callee9, undefined);
   }));
 
-  return function encrypt(_x23, _x24) {
-    return _ref8.apply(this, arguments);
+  return function encrypt(_x27, _x28) {
+    return _ref9.apply(this, arguments);
   };
 }();
 
@@ -450,12 +474,12 @@ var encrypt = function () {
  * @param {string} [format] - The ciphertext and iv encoding format
  */
 var decrypt = function () {
-  var _ref9 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee9(key, ciphertext) {
+  var _ref10 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee10(key, ciphertext) {
     var format = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'hex';
     var context, cipherContext, decrypted;
-    return _regenerator2.default.wrap(function _callee9$(_context9) {
+    return _regenerator2.default.wrap(function _callee10$(_context10) {
       while (1) {
-        switch (_context9.prev = _context9.next) {
+        switch (_context10.prev = _context10.next) {
           case 0:
             _checkCryptokey(key);
             context = {
@@ -468,23 +492,23 @@ var decrypt = function () {
               name: key.algorithm.name,
               iv: context.iv
             };
-            _context9.next = 5;
+            _context10.next = 5;
             return decryptBuffer(key, context.ciphertext, cipherContext);
 
           case 5:
-            decrypted = _context9.sent;
-            return _context9.abrupt('return', JSON.parse(Buffer.from(decrypted).toString()));
+            decrypted = _context10.sent;
+            return _context10.abrupt('return', JSON.parse(Buffer.from(decrypted).toString()));
 
           case 7:
           case 'end':
-            return _context9.stop();
+            return _context10.stop();
         }
       }
-    }, _callee9, undefined);
+    }, _callee10, undefined);
   }));
 
-  return function decrypt(_x26, _x27) {
-    return _ref9.apply(this, arguments);
+  return function decrypt(_x30, _x31) {
+    return _ref10.apply(this, arguments);
   };
 }();
 
