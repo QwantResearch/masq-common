@@ -25,11 +25,9 @@ const ERRORS = {
 /**
     * @typedef MasqError
     * @type {Object}
-    * @property {boolean} error
     * @property {int} status - THe status of the error
     * @property {string} message - The status of the error
     * @property {string} name - The name of the error
-    * @property {string} stack - The stack
     */
 
 /**
@@ -45,8 +43,7 @@ const checkObject = (obj, parameters) => {
       if (!obj[parameters[i]] || obj[parameters[i]] === '') {
         const error = {
           message: `The parameter ${parameters[i]} is required`,
-          name: ERRORS.WRONGPARAMETER,
-          error: true
+          name: ERRORS.WRONGPARAMETER
         }
         throw error
       }

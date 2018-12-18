@@ -26,11 +26,9 @@ var ERRORS = {
   /**
       * @typedef MasqError
       * @type {Object}
-      * @property {boolean} error
       * @property {int} status - THe status of the error
       * @property {string} message - The status of the error
       * @property {string} name - The name of the error
-      * @property {string} stack - The stack
       */
 
   /**
@@ -46,8 +44,7 @@ var ERRORS = {
       if (!obj[parameters[i]] || obj[parameters[i]] === '') {
         var error = {
           message: 'The parameter ' + parameters[i] + ' is required',
-          name: ERRORS.WRONGPARAMETER,
-          error: true
+          name: ERRORS.WRONGPARAMETER
         };
         throw error;
       }
