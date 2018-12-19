@@ -13,7 +13,7 @@ function createPromisifiedHyperDB (name, hexKey) {
   const keyBuffer = hexKey
     ? Buffer.from(hexKey, 'hex')
     : null
-  return promisifyAll(hyperdb(rai(name), keyBuffer, { valueEncoding: 'json' }))
+  return promisifyAll(hyperdb(rai(name), keyBuffer, { valueEncoding: 'json', firstNode: true }))
 }
 
 function dbReady (db) {
@@ -46,10 +46,9 @@ function getHashParams (link) {
   const url = new URL(link)
   const hash = url.hash.slice(2)
   const hashParamsArr = JSON.parse(Buffer.from(hash, 'base64').toString('utf8'))
-  if (typeof hashParamsArr === 'array'
-    || hashParamsArr.length !== 4) {
-
-      throw new Error('Wrong login URL')
+  if (Array.isArray(hashParamsArr) ||
+  hashParamsArr.length !== 4) {
+    throw new Error('Wrong login URL')
   }
   const hashParamsObj = {
     appName: hashParamsArr[0],
