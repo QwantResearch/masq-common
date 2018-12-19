@@ -46,7 +46,7 @@ function getHashParams (link) {
   const url = new URL(link)
   const hash = url.hash.slice(2)
   const hashParamsArr = JSON.parse(Buffer.from(hash, 'base64').toString('utf8'))
-  if (Array.isArray(hashParamsArr) || hashParamsArr.length !== 4) {
+  if (!Array.isArray(hashParamsArr) || hashParamsArr.length !== 4) {
     throw new Error('Wrong login URL')
   }
   const hashParamsObj = {
