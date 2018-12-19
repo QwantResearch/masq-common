@@ -7,7 +7,8 @@ var rai = require('random-access-idb');
 module.exports = {
   dbReady: dbReady,
   dbExists: dbExists,
-  createPromisifiedHyperDB: createPromisifiedHyperDB
+  createPromisifiedHyperDB: createPromisifiedHyperDB,
+  getHashParams: getHashParams
 };
 
 function createPromisifiedHyperDB(name, hexKey) {
@@ -41,4 +42,22 @@ function dbExists(dbName) {
       reject(err);
     };
   });
+}
+
+function getHashParams(link) {
+  var url = new URL(link);
+  var hash = url.hash.slice(2);
+  var hashParamsArr = JSON.parse(Buffer.from(hash, 'base64').toString('utf8'));
+  if (typeof hashParamsArr === 'array' || hashParamsArr.length !== 4) {
+
+    throw new Error('Wrong login URL');
+  }
+  var hashParamsObj = {
+    appName: hashParamsArr[0],
+    requestType: hashParamsArr[1],
+    channel: hashParamsArr[2],
+    key: hashParamsArr[3]
+  };
+  hashParamsObj.key = Buffer.from(hashParamsObj.key, 'base64');
+  return hashParamsObj;
 }
