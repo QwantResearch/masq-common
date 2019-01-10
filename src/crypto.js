@@ -21,12 +21,28 @@ const getBuffer = (arr) => {
 }
 
 /**
+ @typedef protectedMK
+ @type {Object}
+ @property {encMK} encMK - The encrypted MK
+ @property {string} hashAlgo - The hash algo for the PBKDF2 and the final hash to store it
+ @property {sring} salt - The salt used to derive the key (format: hex string)
+ @property {Number} iterations - The iteration # used during key derivation
+ */
+
+/**
  @typedef HashedPassphrase
  @type {Object}
  @property {string} storedHash - The hash of the derived key (format: hex string)
  @property {string} hashAlgo - The hash algo for the PBKDF2 and the final hash to store it
  @property {sring} salt - The salt used to derive the key (format: hex string)
  @property {Number} iterations - The iteration # used during key derivation
+ */
+
+/**
+ @typedef encMK
+ @type {Object}
+ @property {string} iv - The iv used to encrypt the MK (format: hex string)
+ @property {string} ciphertext - The encrypted MK (format: hex string)
  */
 
 const _checkPassphrase = (passphrase) => {
@@ -42,7 +58,7 @@ const _checkCryptokey = (key) => {
 }
 
 /**
- * Generate a PBKDF2 derived key based on user given passPhrase
+ * Generate a PBKDF2 derived key (bits) based on user given passPhrase
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
@@ -96,19 +112,22 @@ const hash256 = async (msg, type = 'SHA-256') => {
  */
 const derivePassphrase = async (passPhrase, salt) => {
   _checkPassphrase(passPhrase)
+  const hashAlgo = 'SHA-256'
   const _salt = salt || genRandomBuffer(16)
   const iterations = 100000
-  const hashedValue = await deriveBitsAndHash(passPhrase, _salt, iterations)
+  const encMK = await deriveBitsGenAndEncMK(passPhrase, _salt, iterations, hashAlgo)
   return {
     salt: Buffer.from(_salt).toString('hex'),
     iterations: iterations,
-    hashAlgo: 'SHA-256',
-    storedHash: Buffer.from(hashedValue).toString('hex')
+    hashAlgo,
+    encMK: encMK
   }
 }
 
 /**
- * Derive the passphrase with PBKDF2 and hash the output with the given hash function
+ * Derive the passphrase with PBKDF2
+ * Generate a AES key (MK)
+ * Encrypt the MK
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
@@ -116,27 +135,59 @@ const derivePassphrase = async (passPhrase, salt) => {
  * @param {string} [hash] The hash function used for derivation and final hash computing
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
-const deriveBitsAndHash = async (passPhrase, salt, iterations, hash) => {
+const deriveBitsGenAndEncMK = async (passPhrase, salt, iterations, hash) => {
   const derivedPassphrase = await deriveBits(passPhrase, salt, iterations, hash)
-  const finalHash = await hash256(derivedPassphrase)
-  return finalHash
+  const KEK = await importKey(derivedPassphrase)
+  const MK = genRandomBuffer(16)
+  // console.log('1.0', MK)
+  // console.log('1.1', Buffer.from(MK).toString('hex'))
+  const encMK = await encrypt(KEK, Buffer.from(MK).toString('hex'))
+  // console.log('1.1', encMK)
+  // const decMK = await decrypt(KEK, encMK)
+  // console.log('1.2', decMK)
+
+  return encMK
 }
 
-const requiredParameterHashedPassphrase = ['salt', 'iterations', 'storedHash', 'hashAlgo']
+/**
+ * Derive the passphrase with PBKDF2 to obtain the KEK
+ * Decrypt the encypted MK
+ * return the raw MK
+ *
+ * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
+ * @param {arrayBuffer} [salt] The salt
+ * @param {Number} [iterations] The iterations number
+ * @param {string} [hash] The hash function used for derivation and final hash computing
+ * @param {encMK} [encMK] The encrypted MK
+ * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
+ */
+const deriveBitsDecMK = async (passPhrase, salt, iterations, hash, encMK) => {
+  const _salt = typeof (salt) === 'string' ? Buffer.from(salt, ('hex')) : salt
+  const derivedPassphrase = await deriveBits(passPhrase, _salt, iterations, hash)
+  const KEK = await importKey(derivedPassphrase)
+  return decrypt(KEK, encMK)
+}
+
+const requiredParameterProtectedMK = ['salt', 'iterations', 'encMK', 'hashAlgo']
 
 /**
  * Check a given passphrase by comparing it to the stored hash value (in HashedPassphrase object)
  *
  * @param {string} passphrase The passphrase
- * @param {HashedPassphrase} hashedPassphrase The HashedPassphrase object
+ * @param {protectedMK} protectedMK The protectedMK object
  * @returns {Promise<Boolean>}   A promise
  */
-const checkPassphrase = async (passPhrase, hashedPassphrase) => {
+const checkPassphrase = async (passPhrase, protectedMK) => {
   _checkPassphrase(passPhrase)
-  checkObject(hashedPassphrase, requiredParameterHashedPassphrase)
-  const { salt, iterations, storedHash, hashAlgo } = hashedPassphrase
-  const hashCandidate = await deriveBitsAndHash(passPhrase, Buffer.from(salt, 'hex'), iterations, hashAlgo)
-  return Buffer.from(hashCandidate).toString('hex') === storedHash
+  checkObject(protectedMK, requiredParameterProtectedMK)
+  try {
+    const { salt, iterations, encMK, hashAlgo } = protectedMK
+    const MK = await deriveBitsDecMK(passPhrase, salt, iterations, hashAlgo, encMK)
+    return Buffer.from(MK, 'hex')
+  } catch (error) {
+    // Wrong passphrase
+    return null
+  }
 }
 
 /**
@@ -231,7 +282,7 @@ const encryptBuffer = async (key, data, cipherContext) => {
 const encrypt = async (key, data, format = 'hex') => {
   _checkCryptokey(key)
   let context = {
-    iv: genRandomBuffer(16),
+    iv: genRandomBuffer(key.algorithm.name === 'AES-GCM' ? 12 : 16),
     plaintext: Buffer.from(JSON.stringify(data))
   }
 
@@ -256,11 +307,13 @@ const encrypt = async (key, data, format = 'hex') => {
  */
 const decrypt = async (key, ciphertext, format = 'hex') => {
   _checkCryptokey(key)
+
   let context = {
     ciphertext: ciphertext.hasOwnProperty('ciphertext') ? Buffer.from(ciphertext.ciphertext, (format)) : '',
     // IV is 128 bits long === 16 bytes
     iv: ciphertext.hasOwnProperty('iv') ? Buffer.from(ciphertext.iv, (format)) : ''
   }
+
   // Prepare cipher context, depends on cipher mode
   let cipherContext = {
     name: key.algorithm.name,
