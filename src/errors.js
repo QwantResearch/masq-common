@@ -1,34 +1,35 @@
 const ERRORS = {
-  NOLOGGEDUSER: 'No logged user',
-  WRONGPARAMETER: 'One or several parameters are wrong',
-  WRONGPASSPHRASE: 'The given passphrase is wrong',
-  NOURLPROVIDED: 'No url provided',
-  EMPTYUSERLIST: 'User list is empty',
-  NOUSERNAME: 'No username provided',
-  NOPASSPHRASE: 'No passphrase provided',
-  EXISTINGUSERNAME: 'The username already exists',
-  EXISTINGURL: 'The application url already exists',
-  FUNCTIONNOTDEFINED: 'The function is not defined',
-  USERNAMENOTFOUND: 'The username does not exist',
-  NOEXISTINGKEY: 'The required key does not exist',
-  NOVALUE: 'No value provided',
-  NOTOKEN: 'Token does not exist',
-  BADTOKEN: 'Token is not valid',
-  BADREQUEST: 'Bad request',
-  NOTAUTHORIZED: 'Not authorized',
-  NOCRYPTOKEY: 'Not a cryptokey',
-  ENCRYPTIONERROR: 'Encryption error',
-  DECRYPTIONERROR: 'Decryption error',
-  NOIMPORTRULES: 'No import rules provided'
+  NOT_LOGGED_IN: 'Not logged into Masq',
+  NOT_CONNECTED: 'Not connected to Masq',
+  UNABLE_TO_DECRYPT: 'Unable to decrypt data',
+  WRONG_MESSAGE: 'Wrong message received',
+  MASQ_ACCESS_REFUSED_BY_USER: 'Masq access refused by the user',
+  INVALID_KEY: 'Invalid key'
 }
 
-/**
-    * @typedef MasqError
-    * @type {Object}
-    * @property {int} status - THe status of the error
-    * @property {string} message - The status of the error
-    * @property {string} name - The name of the error
-    */
+class MasqError extends Error {
+  constructor (type, details) {
+    super()
+    this.type = type
+    this.details = details
+  }
+
+  getMessage () {
+    if (!this.type) {
+      return 'Unknown error'
+    }
+    let msg = ERRORS[this.type]
+    if (!msg) {
+      msg = `Unknown error with type "${this.type}"`
+    }
+
+    if (this.details) {
+      msg = msg + ' : ' + this.details
+    }
+
+    return msg
+  }
+}
 
 /**
    * Use this fonction to check if the required parameters
@@ -51,23 +52,6 @@ const checkObject = (obj, parameters) => {
   }
 }
 
-/**
-   * Generate a masqError object, the name must be
-   * one of ERRORS.
-   *
-   * @param {string} name - The name of the error
-   * @param {string} message
-   * @param {string} status
-   */
-const generateError = (name, message, status) => {
-  let err = {
-    name: name || 'Unknown error',
-    message: message || '',
-    status: status || ''
-  }
-  return err
-}
-
-module.exports.ERRORS = ERRORS
-module.exports.generateError = generateError
 module.exports.checkObject = checkObject
+module.exports.ERRORS = ERRORS
+module.exports.MasqError = MasqError
