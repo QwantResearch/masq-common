@@ -1,4 +1,4 @@
-import { generateError, ERRORS, checkObject } from './errors'
+import { generateError, ERRORS, checkObject, MasqError } from './errors'
 
 const genRandomBuffer = (len = 16) => {
   const values = window.crypto.getRandomValues(new Uint8Array(len))
@@ -193,8 +193,14 @@ const importKey = (key, type = 'raw', mode = 'AES-GCM') => {
  */
 const decryptBuffer = async (key, data, cipherContext) => {
   // TODO: test input params
-  const decrypted = await window.crypto.subtle.decrypt(cipherContext, key, data)
-  return new Uint8Array(decrypted)
+  try {
+    const decrypted = await window.crypto.subtle.decrypt(cipherContext, key, data)
+    return new Uint8Array(decrypted)
+  } catch (e) {
+    if (e.message === 'Unsupported state or unable to authenticate data') {
+      throw new MasqError(ERRORS.UNABLE_TO_DECRYPT)
+    }
+  }
 }
 
 /**

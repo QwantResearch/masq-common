@@ -357,19 +357,31 @@ var decryptBuffer = function () {
       while (1) {
         switch (_context7.prev = _context7.next) {
           case 0:
-            _context7.next = 2;
+            _context7.prev = 0;
+            _context7.next = 3;
             return window.crypto.subtle.decrypt(cipherContext, key, data);
 
-          case 2:
+          case 3:
             decrypted = _context7.sent;
             return _context7.abrupt('return', new Uint8Array(decrypted));
 
-          case 4:
+          case 7:
+            _context7.prev = 7;
+            _context7.t0 = _context7['catch'](0);
+
+            if (!(_context7.t0.message === 'Unsupported state or unable to authenticate data')) {
+              _context7.next = 11;
+              break;
+            }
+
+            throw new _errors.MasqError(_errors.ERRORS.UNABLE_TO_DECRYPT);
+
+          case 11:
           case 'end':
             return _context7.stop();
         }
       }
-    }, _callee7, undefined);
+    }, _callee7, undefined, [[0, 7]]);
   }));
 
   return function decryptBuffer(_x20, _x21, _x22) {
