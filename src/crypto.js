@@ -21,9 +21,9 @@ const getBuffer = (arr) => {
 }
 
 /**
- @typedef protectedMK
+ @typedef protectedMasterKey
  @type {Object}
- @property {encMK} encMK - The encrypted MK
+ @property {encMasterKey} encMasterKey - The encrypted MasterKey
  @property {string} hashAlgo - The hash algo for the PBKDF2 and the final hash to store it
  @property {sring} salt - The salt used to derive the key (format: hex string)
  @property {Number} iterations - The iteration # used during key derivation
@@ -39,10 +39,10 @@ const getBuffer = (arr) => {
  */
 
 /**
- @typedef encMK
+ @typedef encMasterKey
  @type {Object}
- @property {string} iv - The iv used to encrypt the MK (format: hex string)
- @property {string} ciphertext - The encrypted MK (format: hex string)
+ @property {string} iv - The iv used to encrypt the masterKey (format: hex string)
+ @property {string} ciphertext - The encrypted masterKey (format: hex string)
  */
 
 const _checkPassphrase = (passphrase) => {
@@ -115,19 +115,19 @@ const derivePassphrase = async (passPhrase, salt) => {
   const hashAlgo = 'SHA-256'
   const _salt = salt || genRandomBuffer(16)
   const iterations = 100000
-  const encMK = await deriveBitsGenAndEncMK(passPhrase, _salt, iterations, hashAlgo)
+  const encMasterKey = await deriveBitsGenAndEncMasterKey(passPhrase, _salt, iterations, hashAlgo)
   return {
     salt: Buffer.from(_salt).toString('hex'),
     iterations: iterations,
     hashAlgo,
-    encMK: encMK
+    encMasterKey: encMasterKey
   }
 }
 
 /**
  * Derive the passphrase with PBKDF2
- * Generate a AES key (MK)
- * Encrypt the MK
+ * Generate a AES key (masterKey)
+ * Encrypt the masterKey
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
@@ -135,55 +135,55 @@ const derivePassphrase = async (passPhrase, salt) => {
  * @param {string} [hash] The hash function used for derivation and final hash computing
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
-const deriveBitsGenAndEncMK = async (passPhrase, salt, iterations, hash) => {
+const deriveBitsGenAndEncMasterKey = async (passPhrase, salt, iterations, hash) => {
   const derivedPassphrase = await deriveBits(passPhrase, salt, iterations, hash)
   const KEK = await importKey(derivedPassphrase)
-  const MK = genRandomBuffer(16)
-  // console.log('1.0', MK)
-  // console.log('1.1', Buffer.from(MK).toString('hex'))
-  const encMK = await encrypt(KEK, Buffer.from(MK).toString('hex'))
-  // console.log('1.1', encMK)
-  // const decMK = await decrypt(KEK, encMK)
-  // console.log('1.2', decMK)
+  const masterKey = genRandomBuffer(16)
+  // console.log('1.0', masterKey)
+  // console.log('1.1', Buffer.from(masterKey).toString('hex'))
+  const encMasterKey = await encrypt(KEK, Buffer.from(masterKey).toString('hex'))
+  // console.log('1.1', encMasterKey)
+  // const decMasterKey = await decrypt(KEK, encMasterKey)
+  // console.log('1.2', decMasterKey)
 
-  return encMK
+  return encMasterKey
 }
 
 /**
  * Derive the passphrase with PBKDF2 to obtain the KEK
- * Decrypt the encypted MK
- * return the raw MK
+ * Decrypt the encypted masterKey
+ * return the raw masterKey
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
  * @param {string} [hash] The hash function used for derivation and final hash computing
- * @param {encMK} [encMK] The encrypted MK
+ * @param {encMasterKey} [encMasterKey] The encrypted masterKey
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
-const deriveBitsDecMK = async (passPhrase, salt, iterations, hash, encMK) => {
+const deriveBitsDecMasterKey = async (passPhrase, salt, iterations, hash, encMasterKey) => {
   const _salt = typeof (salt) === 'string' ? Buffer.from(salt, ('hex')) : salt
   const derivedPassphrase = await deriveBits(passPhrase, _salt, iterations, hash)
   const KEK = await importKey(derivedPassphrase)
-  return decrypt(KEK, encMK)
+  return decrypt(KEK, encMasterKey)
 }
 
-const requiredParameterProtectedMK = ['salt', 'iterations', 'encMK', 'hashAlgo']
+const requiredParameterProtectedMasterKey = ['salt', 'iterations', 'encMasterKey', 'hashAlgo']
 
 /**
  * Check a given passphrase by comparing it to the stored hash value (in HashedPassphrase object)
  *
  * @param {string} passphrase The passphrase
- * @param {protectedMK} protectedMK The protectedMK object
+ * @param {protectedMasterKey} protectedMasterKey The protectedMasterKey object
  * @returns {Promise<Boolean>}   A promise
  */
-const checkPassphrase = async (passPhrase, protectedMK) => {
+const checkPassphrase = async (passPhrase, protectedMasterKey) => {
   _checkPassphrase(passPhrase)
-  checkObject(protectedMK, requiredParameterProtectedMK)
+  checkObject(protectedMasterKey, requiredParameterProtectedMasterKey)
   try {
-    const { salt, iterations, encMK, hashAlgo } = protectedMK
-    const MK = await deriveBitsDecMK(passPhrase, salt, iterations, hashAlgo, encMK)
-    return Buffer.from(MK, 'hex')
+    const { salt, iterations, encMasterKey, hashAlgo } = protectedMasterKey
+    const masterKey = await deriveBitsDecMasterKey(passPhrase, salt, iterations, hashAlgo, encMasterKey)
+    return Buffer.from(masterKey, 'hex')
   } catch (error) {
     // Wrong passphrase
     return null
