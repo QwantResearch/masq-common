@@ -110,62 +110,25 @@ const hash256 = async (msg, type = 'SHA-256') => {
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @returns {Promise<HashedPassphrase>}   A promise that contains the derived key
  */
-const derivePassphrase = async (passPhrase, salt) => {
+const deriveKeyFromPassphrase = async (passPhrase, salt) => {
   _checkPassphrase(passPhrase)
   const hashAlgo = 'SHA-256'
   const _salt = salt || genRandomBuffer(16)
   const iterations = 100000
-  const encMasterKey = await deriveBitsGenAndEncMasterKey(passPhrase, _salt, iterations, hashAlgo)
+  // Derive a key from the passphrase
+  const derivedKey = await deriveBits(passPhrase, salt, iterations, hashAlgo)
+  const keyEncryptionKey = await importKey(derivedKey)
+  // Generate the masterKey
+  const masterKey = genRandomBuffer(16)
+  // Encrypt the Master Key with the keyEncryptionKey derived from the passphrase
+  const encMasterKey = await encrypt(keyEncryptionKey, Buffer.from(masterKey).toString('hex'))
+
   return {
     salt: Buffer.from(_salt).toString('hex'),
     iterations: iterations,
     hashAlgo,
     encMasterKey: encMasterKey
   }
-}
-
-/**
- * Derive the passphrase with PBKDF2
- * Generate a AES key (masterKey)
- * Encrypt the masterKey
- *
- * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
- * @param {arrayBuffer} [salt] The salt
- * @param {Number} [iterations] The iterations number
- * @param {string} [hashAlgo] The hash function used for derivation and final hash computing
- * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
- */
-const deriveBitsGenAndEncMasterKey = async (passPhrase, salt, iterations, hashAlgo) => {
-  const derivedPassphrase = await deriveBits(passPhrase, salt, iterations, hashAlgo)
-  const KEK = await importKey(derivedPassphrase)
-  const masterKey = genRandomBuffer(16)
-  // console.log('1.0', masterKey)
-  // console.log('1.1', Buffer.from(masterKey).toString('hex'))
-  const encMasterKey = await encrypt(KEK, Buffer.from(masterKey).toString('hex'))
-  // console.log('1.1', encMasterKey)
-  // const decMasterKey = await decrypt(KEK, encMasterKey)
-  // console.log('1.2', decMasterKey)
-
-  return encMasterKey
-}
-
-/**
- * Derive the passphrase with PBKDF2 to obtain the KEK
- * Decrypt the encypted masterKey
- * return the raw masterKey
- *
- * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
- * @param {arrayBuffer} [salt] The salt
- * @param {Number} [iterations] The iterations number
- * @param {string} [hashAlgo] The hash function used for derivation and final hash computing
- * @param {encMasterKey} [encMasterKey] The encrypted masterKey
- * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
- */
-const deriveBitsDecMasterKey = async (passPhrase, salt, iterations, hashAlgo, encMasterKey) => {
-  const _salt = typeof (salt) === 'string' ? Buffer.from(salt, ('hex')) : salt
-  const derivedPassphrase = await deriveBits(passPhrase, _salt, iterations, hashAlgo)
-  const KEK = await importKey(derivedPassphrase)
-  return decrypt(KEK, encMasterKey)
 }
 
 const requiredParameterProtectedMasterKey = ['salt', 'iterations', 'encMasterKey', 'hashAlgo']
@@ -182,7 +145,14 @@ const checkPassphrase = async (passPhrase, protectedMasterKey) => {
   checkObject(protectedMasterKey, requiredParameterProtectedMasterKey)
   try {
     const { salt, iterations, encMasterKey, hashAlgo } = protectedMasterKey
-    const masterKey = await deriveBitsDecMasterKey(passPhrase, salt, iterations, hashAlgo, encMasterKey)
+    // init salt
+    const _salt = typeof (salt) === 'string' ? Buffer.from(salt, ('hex')) : salt
+    // derive key from passphrase
+    const derivedKey = await deriveBits(passPhrase, _salt, iterations, hashAlgo)
+    const keyEncryptionKey = await importKey(derivedKey)
+    // decrypt encrypted master key with the key derived from the passphrase
+    const masterKey = decrypt(keyEncryptionKey, encMasterKey)
+
     return Buffer.from(masterKey, 'hex')
   } catch (error) {
     // Wrong passphrase
@@ -327,5 +297,5 @@ module.exports = {
   genRandomBuffer,
   getBuffer,
   checkPassphrase,
-  derivePassphrase
+  deriveKeyFromPassphrase
 }
