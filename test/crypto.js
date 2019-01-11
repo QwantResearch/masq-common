@@ -78,13 +78,22 @@ describe('MasqCommon crypto', function () {
 
     it('The salt and protectedMK must be different for two consecutive call to derivePassphrase even with the same passphrase', async () => {
       const passphrase = 'secret'
+      const protectedMK1 = await MasqCommon.crypto.derivePassphrase(passphrase)
+      const protectedMK2 = await MasqCommon.crypto.derivePassphrase(passphrase)
+      chai.assert.equal(protectedMK1.salt === protectedMK2.salt, false, 'Two different salt')
+      chai.assert.equal(protectedMK1.encMK.iv === protectedMK2.encMK.iv, false, 'Two different iv')
+      chai.assert.isFalse(protectedMK1.encMK.ciphertext === protectedMK2.encMK.ciphertext, false, 'Two different ciphertext')
+    })
+
+    it('Should generate the same derived key if the salt is a UInt8Array or Buffer.from(UInt8array)', async () => {
+      const passphrase = 'secret'
       const salt1 = MasqCommon.crypto.genRandomBuffer(16)
       const salt2 = MasqCommon.crypto.getBuffer(salt1)
 
-      const hashedPassphrase1 = await MasqCommon.crypto.derivePassphrase(passphrase, salt1)
-      const hashedPassphrase2 = await MasqCommon.crypto.derivePassphrase(passphrase, salt2)
-      chai.assert.isTrue(hashedPassphrase1.salt === hashedPassphrase2.salt, 'Two identical salt')
-      chai.assert.isTrue(hashedPassphrase1.storedHash === hashedPassphrase2.storedHash, 'Two identical hashed Passphrase')
+      const protectedMK1 = await MasqCommon.crypto.derivePassphrase(passphrase, salt1)
+      const protectedMK2 = await MasqCommon.crypto.derivePassphrase(passphrase, salt2)
+      chai.assert.isTrue(protectedMK1.salt === protectedMK2.salt, 'Two identical salt')
+      chai.assert.isTrue(protectedMK1.storedHash === protectedMK2.storedHash, 'Two identical hashed Passphrase')
     })
   })
 
