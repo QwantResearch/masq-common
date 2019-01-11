@@ -3,17 +3,17 @@
 /* global chai */
 
 describe('MasqCommon crypto', function () {
-  // context('Generating a random buffer (e.g. iv)', () => {
-  //   it('Should generate a random buffer without length parameter', () => {
-  //     const iv1 = MasqCommon.crypto.genRandomBuffer()
-  //     chai.assert.lengthOf(iv1, 16, 'Default length is 16')
-  //   })
+  context('Generating a random buffer (e.g. iv)', () => {
+    it('Should generate a random buffer without length parameter', () => {
+      const iv1 = MasqCommon.crypto.genRandomBuffer()
+      chai.assert.lengthOf(iv1, 16, 'Default length is 16')
+    })
 
-  //   it('Should generate a random buffer with a specific length parameter', () => {
-  //     const iv2 = MasqCommon.crypto.genRandomBuffer(8)
-  //     chai.assert.lengthOf(iv2, 8, 'Array length is not 8')
-  //   })
-  // })
+    it('Should generate a random buffer with a specific length parameter', () => {
+      const iv2 = MasqCommon.crypto.genRandomBuffer(8)
+      chai.assert.lengthOf(iv2, 8, 'Array length is not 8')
+    })
+  })
 
   context('Should derive a passphrase ', () => {
     let passphrase = 'mySecretPass'
@@ -85,94 +85,94 @@ describe('MasqCommon crypto', function () {
       chai.assert.isFalse(protectedMK1.encMK.ciphertext === protectedMK2.encMK.ciphertext, false, 'Two different ciphertext')
     })
 
-    // it('Should generate the same derived key if the salt is a UInt8Array or Buffer.from(UInt8array)', async () => {
-    //   const passphrase = 'secret'
-    //   const salt1 = MasqCommon.crypto.genRandomBuffer(16)
-    //   const salt2 = MasqCommon.crypto.getBuffer(salt1)
+    it('Should generate the same derived key if the salt is a UInt8Array or Buffer.from(UInt8array)', async () => {
+      const passphrase = 'secret'
+      const salt1 = MasqCommon.crypto.genRandomBuffer(16)
+      const salt2 = MasqCommon.crypto.getBuffer(salt1)
 
-    //   const protectedMK1 = await MasqCommon.crypto.derivePassphrase(passphrase, salt1)
-    //   const protectedMK2 = await MasqCommon.crypto.derivePassphrase(passphrase, salt2)
-    //   chai.assert.isTrue(protectedMK1.salt === protectedMK2.salt, 'Two identical salt')
-    //   chai.assert.isTrue(protectedMK1.storedHash === protectedMK2.storedHash, 'Two identical hashed Passphrase')
-    // })
+      const protectedMK1 = await MasqCommon.crypto.derivePassphrase(passphrase, salt1)
+      const protectedMK2 = await MasqCommon.crypto.derivePassphrase(passphrase, salt2)
+      chai.assert.isTrue(protectedMK1.salt === protectedMK2.salt, 'Two identical salt')
+      chai.assert.isTrue(protectedMK1.storedHash === protectedMK2.storedHash, 'Two identical hashed Passphrase')
+    })
+  })
+
+  context('AES operations and key export/import', () => {
+    it('Should generate an extractable AES key cryptokey with default settings (AES-GCM 128 bits)', async () => {
+      const key = await MasqCommon.crypto.genAESKey()
+      chai.assert.equal(key.type, 'secret', 'Secret key')
+      chai.assert.isTrue(key.extractable, 'Key is extractable by default to allow export or wrap')
+    })
+
+    it('Should generate and export (in raw format by default) an extractable AES key cryptokey with default settings (AES-GCM 128 bits)', async () => {
+      const key = await MasqCommon.crypto.genAESKey()
+      const rawKey = await MasqCommon.crypto.exportKey(key)
+      chai.assert.lengthOf(rawKey, 16, 'Default size is 128 bits')
+    })
+
+    it('Should generate and export (in raw format by default) an extractable AES key cryptokey with default settings (AES-GCM 256 bits)', async () => {
+      const key = await MasqCommon.crypto.genAESKey(true, 'AES-GCM', 256)
+      const rawKey = await MasqCommon.crypto.exportKey(key)
+      chai.assert.lengthOf(rawKey, 32, 'Default size is 256 bits')
+    })
+
+    it('Should generate and export in raw format an extractable AES key cryptokey with default settings (AES-GCM 128 bits)', async () => {
+      const key = await MasqCommon.crypto.genAESKey()
+      const rawKey = await MasqCommon.crypto.exportKey(key, 'raw')
+      chai.assert.lengthOf(rawKey, 16, 'Default size is 128 bits')
+    })
+
+    it('Should reject if the key is not a CryptoKey', async () => {
+      let err = '_ERROR_NOT_THROWN_'
+      try {
+        await MasqCommon.crypto.encrypt([2, 3], { data: 'hello' })
+      } catch (error) {
+        err = error.name
+      }
+      chai.assert.equal(err, MasqCommon.errors.ERRORS.NOCRYPTOKEY, 'Reject if given key is not a CryptoKey')
+    })
+
+    it('Should encrypt a message and encode with default format (hex)', async () => {
+      const message = { data: 'hello' }
+      const key = await MasqCommon.crypto.genAESKey()
+      const ciphertext = await MasqCommon.crypto.encrypt(key, message)
+      chai.assert.lengthOf(ciphertext.iv, 24, 'Default size is 24 for hex format (96 bits iv for AES-GCM)')
+    })
+
+    it('Should encrypt a message and encode with base64 format ', async () => {
+      const message = { data: 'hello' }
+      const key = await MasqCommon.crypto.genAESKey()
+      const ciphertext = await MasqCommon.crypto.encrypt(key, message, 'base64')
+
+      chai.assert.equal(ciphertext.ciphertext.slice(-1), '=', 'Last charachter of base64 is always =')
+    })
+
+    it('Should encrypt and decrypt a message with default parameters', async () => {
+      const message = { data: 'hello' }
+      const key = await MasqCommon.crypto.genAESKey()
+      const ciphertext = await MasqCommon.crypto.encrypt(key, message)
+      const plaintext = await MasqCommon.crypto.decrypt(key, ciphertext)
+      chai.assert.deepEqual(plaintext, message, 'Must get the initial message after decryption')
+    })
+
+    it('Should generate/encrypt/export/import/decrypt with raw format for key export', async () => {
+      const message = { data: 'hello' }
+      const key = await MasqCommon.crypto.genAESKey()
+      const ciphertext = await MasqCommon.crypto.encrypt(key, message)
+      const rawKey = await MasqCommon.crypto.exportKey(key)
+      const cryptoKey = await MasqCommon.crypto.importKey(rawKey)
+      const plaintext = await MasqCommon.crypto.decrypt(cryptoKey, ciphertext)
+      chai.assert.deepEqual(plaintext, message, 'Must get the initial message after decryption')
+    })
+
+    it('Should generate/encrypt/export/import/decrypt with jwk format for key export', async () => {
+      const message = { data: 'hello' }
+      const key = await MasqCommon.crypto.genAESKey()
+      const ciphertext = await MasqCommon.crypto.encrypt(key, message)
+      const jwkKey = await MasqCommon.crypto.exportKey(key, 'jwk')
+      const cryptoKey = await MasqCommon.crypto.importKey(jwkKey, 'jwk')
+      const plaintext = await MasqCommon.crypto.decrypt(cryptoKey, ciphertext)
+      chai.assert.deepEqual(plaintext, message, 'Must get the initial message after decryption')
+    })
   })
 })
-
-//   context('AES operations and key export/import', () => {
-//     it('Should generate an extractable AES key cryptokey with default settings (AES-GCM 128 bits)', async () => {
-//       const key = await MasqCommon.crypto.genAESKey()
-//       chai.assert.equal(key.type, 'secret', 'Secret key')
-//       chai.assert.isTrue(key.extractable, 'Key is extractable by default to allow export or wrap')
-//     })
-
-//     it('Should generate and export (in raw format by default) an extractable AES key cryptokey with default settings (AES-GCM 128 bits)', async () => {
-//       const key = await MasqCommon.crypto.genAESKey()
-//       const rawKey = await MasqCommon.crypto.exportKey(key)
-//       chai.assert.lengthOf(rawKey, 16, 'Default size is 128 bits')
-//     })
-
-//     it('Should generate and export (in raw format by default) an extractable AES key cryptokey with default settings (AES-GCM 256 bits)', async () => {
-//       const key = await MasqCommon.crypto.genAESKey(true, 'AES-GCM', 256)
-//       const rawKey = await MasqCommon.crypto.exportKey(key)
-//       chai.assert.lengthOf(rawKey, 32, 'Default size is 256 bits')
-//     })
-
-//     it('Should generate and export in raw format an extractable AES key cryptokey with default settings (AES-GCM 128 bits)', async () => {
-//       const key = await MasqCommon.crypto.genAESKey()
-//       const rawKey = await MasqCommon.crypto.exportKey(key, 'raw')
-//       chai.assert.lengthOf(rawKey, 16, 'Default size is 128 bits')
-//     })
-
-//     it('Should reject if the key is not a CryptoKey', async () => {
-//       let err = '_ERROR_NOT_THROWN_'
-//       try {
-//         await MasqCommon.crypto.encrypt([2, 3], { data: 'hello' })
-//       } catch (error) {
-//         err = error.name
-//       }
-//       chai.assert.equal(err, MasqCommon.errors.ERRORS.NOCRYPTOKEY, 'Reject if given key is not a CryptoKey')
-//     })
-
-//     it('Should encrypt a message and encode with default format (hex)', async () => {
-//       const message = { data: 'hello' }
-//       const key = await MasqCommon.crypto.genAESKey()
-//       const ciphertext = await MasqCommon.crypto.encrypt(key, message)
-//       chai.assert.lengthOf(ciphertext.iv, 32, 'Default size is 32 for hex format (128 bits iv)')
-//     })
-
-//     it('Should encrypt a message and encode with base64 format ', async () => {
-//       const message = { data: 'hello' }
-//       const key = await MasqCommon.crypto.genAESKey()
-//       const ciphertext = await MasqCommon.crypto.encrypt(key, message, 'base64')
-//       chai.assert.equal(ciphertext.iv.slice(-1), '=', 'Last charachter of base64 is always =')
-//     })
-
-//     it('Should encrypt and decrypt a message with default parameters', async () => {
-//       const message = { data: 'hello' }
-//       const key = await MasqCommon.crypto.genAESKey()
-//       const ciphertext = await MasqCommon.crypto.encrypt(key, message)
-//       const plaintext = await MasqCommon.crypto.decrypt(key, ciphertext)
-//       chai.assert.deepEqual(plaintext, message, 'Must get the initial message after decryption')
-//     })
-
-//     it('Should generate/encrypt/export/import/decrypt with raw format for key export', async () => {
-//       const message = { data: 'hello' }
-//       const key = await MasqCommon.crypto.genAESKey()
-//       const ciphertext = await MasqCommon.crypto.encrypt(key, message)
-//       const rawKey = await MasqCommon.crypto.exportKey(key)
-//       const cryptoKey = await MasqCommon.crypto.importKey(rawKey)
-//       const plaintext = await MasqCommon.crypto.decrypt(cryptoKey, ciphertext)
-//       chai.assert.deepEqual(plaintext, message, 'Must get the initial message after decryption')
-//     })
-
-//     it('Should generate/encrypt/export/import/decrypt with jwk format for key export', async () => {
-//       const message = { data: 'hello' }
-//       const key = await MasqCommon.crypto.genAESKey()
-//       const ciphertext = await MasqCommon.crypto.encrypt(key, message)
-//       const jwkKey = await MasqCommon.crypto.exportKey(key, 'jwk')
-//       const cryptoKey = await MasqCommon.crypto.importKey(jwkKey, 'jwk')
-//       const plaintext = await MasqCommon.crypto.decrypt(cryptoKey, ciphertext)
-//       chai.assert.deepEqual(plaintext, message, 'Must get the initial message after decryption')
-//     })
-//   })
-// })
