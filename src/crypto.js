@@ -63,10 +63,10 @@ const _checkCryptokey = (key) => {
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
- * @param {string} [hash] The hash function used for derivation
+ * @param {string} [hashAlgo] The hash function used for derivation
  * @returns {Promise<Uint8Array>}   A promise that contains the derived key
  */
-const deriveBits = async (passPhrase, salt, iterations, hash) => {
+const deriveBits = async (passPhrase, salt, iterations, hashAlgo) => {
   // Always specify a strong salt
   if (iterations < 10000) { console.warn('The iteration number is less than 10000, increase it !') }
 
@@ -81,7 +81,7 @@ const deriveBits = async (passPhrase, salt, iterations, hash) => {
     name: 'PBKDF2',
     salt: salt || new Uint8Array([]),
     iterations: iterations || 100000,
-    hash: hash || 'SHA-256'
+    hashAlgo: hashAlgo || 'SHA-256'
   }, baseKey, 128)
 
   return new Uint8Array(derivedKey)
@@ -132,11 +132,11 @@ const derivePassphrase = async (passPhrase, salt) => {
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
- * @param {string} [hash] The hash function used for derivation and final hash computing
+ * @param {string} [hashAlgo] The hash function used for derivation and final hash computing
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
-const deriveBitsGenAndEncMasterKey = async (passPhrase, salt, iterations, hash) => {
-  const derivedPassphrase = await deriveBits(passPhrase, salt, iterations, hash)
+const deriveBitsGenAndEncMasterKey = async (passPhrase, salt, iterations, hashAlgo) => {
+  const derivedPassphrase = await deriveBits(passPhrase, salt, iterations, hashAlgo)
   const KEK = await importKey(derivedPassphrase)
   const masterKey = genRandomBuffer(16)
   // console.log('1.0', masterKey)
@@ -157,13 +157,13 @@ const deriveBitsGenAndEncMasterKey = async (passPhrase, salt, iterations, hash) 
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
- * @param {string} [hash] The hash function used for derivation and final hash computing
+ * @param {string} [hashAlgo] The hash function used for derivation and final hash computing
  * @param {encMasterKey} [encMasterKey] The encrypted masterKey
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
-const deriveBitsDecMasterKey = async (passPhrase, salt, iterations, hash, encMasterKey) => {
+const deriveBitsDecMasterKey = async (passPhrase, salt, iterations, hashAlgo, encMasterKey) => {
   const _salt = typeof (salt) === 'string' ? Buffer.from(salt, ('hex')) : salt
-  const derivedPassphrase = await deriveBits(passPhrase, _salt, iterations, hash)
+  const derivedPassphrase = await deriveBits(passPhrase, _salt, iterations, hashAlgo)
   const KEK = await importKey(derivedPassphrase)
   return decrypt(KEK, encMasterKey)
 }
