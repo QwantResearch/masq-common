@@ -4,7 +4,9 @@ const ERRORS = {
   UNABLE_TO_DECRYPT: 'Unable to decrypt data',
   WRONG_MESSAGE: 'Wrong message received',
   MASQ_ACCESS_REFUSED_BY_USER: 'Masq access refused by the user',
-  INVALID_KEY: 'Invalid key'
+  INVALID_KEY: 'Invalid key',
+  NODB: 'No DB provided',
+  NOENCRYPTIONKEY: 'No encryption key provided'
 }
 
 class MasqError extends Error {

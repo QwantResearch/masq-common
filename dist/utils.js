@@ -1,15 +1,22 @@
 'use strict';
 
+var _regenerator = require('babel-runtime/regenerator');
+
+var _regenerator2 = _interopRequireDefault(_regenerator);
+
+var _asyncToGenerator2 = require('babel-runtime/helpers/asyncToGenerator');
+
+var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
+
+var _crypto = require('./crypto');
+
+var _errors = require('./errors');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 var promisifyAll = require('bluebird').promisifyAll;
 var hyperdb = require('hyperdb');
 var rai = require('random-access-idb');
-
-module.exports = {
-  dbReady: dbReady,
-  dbExists: dbExists,
-  createPromisifiedHyperDB: createPromisifiedHyperDB,
-  getHashParams: getHashParams
-};
 
 function createPromisifiedHyperDB(name, hexKey) {
   var keyBuffer = hexKey ? Buffer.from(hexKey, 'hex') : null;
@@ -60,3 +67,127 @@ function getHashParams(link) {
   hashParamsObj.key = Buffer.from(hashParamsObj.key, 'base64');
   return hashParamsObj;
 }
+
+/**
+   * Get a value
+   * @param {Object} db - The hyperDB instance
+   * @param {CryptoKey} enckey - The enc/dec AES key
+   * @param {string} key - The key name
+   * @returns {Promise}
+   */
+var get = function () {
+  var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(db, encKey, key) {
+    var node, dec;
+    return _regenerator2.default.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            if (db) {
+              _context.next = 2;
+              break;
+            }
+
+            throw new _errors.MasqError(_errors.ERRORS.NODB);
+
+          case 2:
+            if (encKey) {
+              _context.next = 4;
+              break;
+            }
+
+            throw new _errors.MasqError(_errors.ERRORS.NOENCRYPTIONKEY);
+
+          case 4:
+            _context.next = 6;
+            return db.getAsync(key);
+
+          case 6:
+            node = _context.sent;
+
+            if (node) {
+              _context.next = 9;
+              break;
+            }
+
+            return _context.abrupt('return', null);
+
+          case 9:
+            _context.next = 11;
+            return (0, _crypto.decrypt)(encKey, node.value);
+
+          case 11:
+            dec = _context.sent;
+            return _context.abrupt('return', dec);
+
+          case 13:
+          case 'end':
+            return _context.stop();
+        }
+      }
+    }, _callee, undefined);
+  }));
+
+  return function get(_x, _x2, _x3) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+/**
+   * Put a new value in the db
+   * @param {Object} db - The hyperDB instance
+   * @param {CryptoKey} enckey - The enc/dec AES key
+   * @param {string} key - The key name
+   * @param {any} value - The value to insert
+   * @returns {Promise}
+   */
+var put = function () {
+  var _ref2 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee2(db, encKey, key, value) {
+    var enc;
+    return _regenerator2.default.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            if (db) {
+              _context2.next = 2;
+              break;
+            }
+
+            throw new _errors.MasqError(_errors.ERRORS.NODB);
+
+          case 2:
+            if (encKey) {
+              _context2.next = 4;
+              break;
+            }
+
+            throw new _errors.MasqError(_errors.ERRORS.NOENCRYPTIONKEY);
+
+          case 4:
+            _context2.next = 6;
+            return (0, _crypto.encrypt)(encKey, value);
+
+          case 6:
+            enc = _context2.sent;
+            return _context2.abrupt('return', db.putAsync(key, enc));
+
+          case 8:
+          case 'end':
+            return _context2.stop();
+        }
+      }
+    }, _callee2, undefined);
+  }));
+
+  return function put(_x4, _x5, _x6, _x7) {
+    return _ref2.apply(this, arguments);
+  };
+}();
+
+module.exports = {
+  dbReady: dbReady,
+  dbExists: dbExists,
+  createPromisifiedHyperDB: createPromisifiedHyperDB,
+  getHashParams: getHashParams,
+  get: get,
+  put: put
+};

@@ -18,7 +18,7 @@
   <div id="mocha"></div>
   <script>
     mocha.setup('bdd')
-    mocha.checkLeaks();
+    mocha.setup({ignoreLeaks: true});
   </script>
   <script src="./crypto.js"></script>
   <script src="./utils.js"></script>

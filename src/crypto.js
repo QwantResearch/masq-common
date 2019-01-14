@@ -47,13 +47,13 @@ const getBuffer = (arr) => {
 
 const _checkPassphrase = (passphrase) => {
   if (typeof passphrase !== 'string' || passphrase === '') {
-    throw generateError(ERRORS.NOPASSPHRASE)
+    throw new MasqError(ERRORS.NOPASSPHRASE)
   }
 }
 
 const _checkCryptokey = (key) => {
   if (!key.type || key.type !== 'secret') {
-    throw generateError(ERRORS.NOCRYPTOKEY)
+    throw new MasqError(ERRORS.NOCRYPTOKEY)
   }
 }
 

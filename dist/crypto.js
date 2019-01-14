@@ -61,13 +61,13 @@ var getBuffer = function getBuffer(arr) {
 
 var _checkPassphrase = function _checkPassphrase(passphrase) {
   if (typeof passphrase !== 'string' || passphrase === '') {
-    throw (0, _errors.generateError)(_errors.ERRORS.NOPASSPHRASE);
+    throw new _errors.MasqError(_errors.ERRORS.NOPASSPHRASE);
   }
 };
 
 var _checkCryptokey = function _checkCryptokey(key) {
   if (!key.type || key.type !== 'secret') {
-    throw (0, _errors.generateError)(_errors.ERRORS.NOCRYPTOKEY);
+    throw new _errors.MasqError(_errors.ERRORS.NOCRYPTOKEY);
   }
 };
 

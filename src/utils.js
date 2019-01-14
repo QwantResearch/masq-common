@@ -1,13 +1,8 @@
+import { encrypt, decrypt } from './crypto'
+import { ERRORS, MasqError } from './errors'
 const promisifyAll = require('bluebird').promisifyAll
 const hyperdb = require('hyperdb')
 const rai = require('random-access-idb')
-
-module.exports = {
-  dbReady,
-  dbExists,
-  createPromisifiedHyperDB,
-  getHashParams
-}
 
 function createPromisifiedHyperDB (name, hexKey) {
   const keyBuffer = hexKey
@@ -57,4 +52,44 @@ function getHashParams (link) {
   }
   hashParamsObj.key = Buffer.from(hashParamsObj.key, 'base64')
   return hashParamsObj
+}
+
+/**
+   * Get a value
+   * @param {Object} db - The hyperDB instance
+   * @param {CryptoKey} enckey - The enc/dec AES key
+   * @param {string} key - The key name
+   * @returns {Promise}
+   */
+const get = async (db, encKey, key) => {
+  if (!db) throw new MasqError(ERRORS.NODB)
+  if (!encKey) throw new MasqError(ERRORS.NOENCRYPTIONKEY)
+  const node = await db.getAsync(key)
+  if (!node) return null
+  const dec = await decrypt(encKey, node.value)
+  return dec
+}
+
+/**
+   * Put a new value in the db
+   * @param {Object} db - The hyperDB instance
+   * @param {CryptoKey} enckey - The enc/dec AES key
+   * @param {string} key - The key name
+   * @param {any} value - The value to insert
+   * @returns {Promise}
+   */
+const put = async (db, encKey, key, value) => {
+  if (!db) throw new MasqError(ERRORS.NODB)
+  if (!encKey) throw new MasqError(ERRORS.NOENCRYPTIONKEY)
+  const enc = await encrypt(encKey, value)
+  return db.putAsync(key, enc)
+}
+
+module.exports = {
+  dbReady,
+  dbExists,
+  createPromisifiedHyperDB,
+  getHashParams,
+  get,
+  put
 }
