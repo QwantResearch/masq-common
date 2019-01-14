@@ -231,9 +231,6 @@ var deriveBitsGenAndEncMK = function () {
           case 5:
             KEK = _context4.sent;
             MK = genRandomBuffer(16);
-            // console.log('1.0', MK)
-            // console.log('1.1', Buffer.from(MK).toString('hex'))
-
             _context4.next = 9;
             return encrypt(KEK, Buffer.from(MK).toString('hex'));
 

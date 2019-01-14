@@ -143,7 +143,8 @@ describe('MasqCommon crypto', function () {
       const message = { data: 'hello' }
       const key = await MasqCommon.crypto.genAESKey()
       const ciphertext = await MasqCommon.crypto.encrypt(key, message, 'base64')
-      chai.assert.equal(ciphertext.ciphertext.slice(-1), '=', 'Last charachter of base64 is always =')
+
+      chai.assert.equal(ciphertext.ciphertext.slice(-1), '=', 'Last character of base64 is always =')
     })
 
     it('Should encrypt and decrypt a message with default parameters', async () => {

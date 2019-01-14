@@ -85,11 +85,43 @@ const put = async (db, encKey, key, value) => {
   return db.putAsync(key, enc)
 }
 
+/**
+   * List all keys and values
+   * @param {Object} db - The hyperDB instance
+   * @param {CryptoKey} enckey - The enc/dec AES key
+   * @param {string} prefix - Prefix
+   * @returns {Promise}
+   */
+const list = async (db, encKey, prefix) => {
+  if (!db) throw new MasqError(ERRORS.NODB)
+  if (!encKey) throw new MasqError(ERRORS.NOENCRYPTIONKEY)
+
+  const list = await db.listAsync(prefix)
+  if (list.length === 1 && list[0].key === '' && list[0].value === null) {
+    console.log('empty')
+
+    return {}
+  }
+
+  const decList = await Promise.all(list.map(async (elt) => ({
+    key: elt.key,
+    value: await decrypt(encKey, elt.value)
+  })))
+
+  const reformattedDic = decList.reduce((dic, e) => {
+    const el = Array.isArray(e) ? e[0] : e
+    dic[el.key] = el.value
+    return dic
+  }, {})
+  return reformattedDic
+}
+
 module.exports = {
   dbReady,
   dbExists,
   createPromisifiedHyperDB,
   getHashParams,
   get,
-  put
+  put,
+  list
 }

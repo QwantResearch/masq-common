@@ -120,7 +120,7 @@ const derivePassphrase = async (passPhrase, salt) => {
     salt: Buffer.from(_salt).toString('hex'),
     iterations: iterations,
     hashAlgo,
-    encMK: encMK
+    encMK
   }
 }
 
@@ -139,13 +139,7 @@ const deriveBitsGenAndEncMK = async (passPhrase, salt, iterations, hash) => {
   const derivedPassphrase = await deriveBits(passPhrase, salt, iterations, hash)
   const KEK = await importKey(derivedPassphrase)
   const MK = genRandomBuffer(16)
-  // console.log('1.0', MK)
-  // console.log('1.1', Buffer.from(MK).toString('hex'))
   const encMK = await encrypt(KEK, Buffer.from(MK).toString('hex'))
-  // console.log('1.1', encMK)
-  // const decMK = await decrypt(KEK, encMK)
-  // console.log('1.2', decMK)
-
   return encMK
 }
 

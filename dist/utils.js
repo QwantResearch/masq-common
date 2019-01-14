@@ -183,11 +183,111 @@ var put = function () {
   };
 }();
 
+/**
+   * List all keys and values
+   * @param {Object} db - The hyperDB instance
+   * @param {CryptoKey} enckey - The enc/dec AES key
+   * @param {string} prefix - Prefix
+   * @returns {Promise}
+   */
+var list = function () {
+  var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(db, encKey, prefix) {
+    var list, decList, reformattedDic;
+    return _regenerator2.default.wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            if (db) {
+              _context4.next = 2;
+              break;
+            }
+
+            throw new _errors.MasqError(_errors.ERRORS.NODB);
+
+          case 2:
+            if (encKey) {
+              _context4.next = 4;
+              break;
+            }
+
+            throw new _errors.MasqError(_errors.ERRORS.NOENCRYPTIONKEY);
+
+          case 4:
+            _context4.next = 6;
+            return db.listAsync(prefix);
+
+          case 6:
+            list = _context4.sent;
+
+            if (!(list.length === 1 && list[0].key === '' && list[0].value === null)) {
+              _context4.next = 10;
+              break;
+            }
+
+            console.log('empty');
+
+            return _context4.abrupt('return', {});
+
+          case 10:
+            _context4.next = 12;
+            return Promise.all(list.map(function () {
+              var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(elt) {
+                return _regenerator2.default.wrap(function _callee3$(_context3) {
+                  while (1) {
+                    switch (_context3.prev = _context3.next) {
+                      case 0:
+                        _context3.t0 = elt.key;
+                        _context3.next = 3;
+                        return (0, _crypto.decrypt)(encKey, elt.value);
+
+                      case 3:
+                        _context3.t1 = _context3.sent;
+                        return _context3.abrupt('return', {
+                          key: _context3.t0,
+                          value: _context3.t1
+                        });
+
+                      case 5:
+                      case 'end':
+                        return _context3.stop();
+                    }
+                  }
+                }, _callee3, undefined);
+              }));
+
+              return function (_x11) {
+                return _ref4.apply(this, arguments);
+              };
+            }()));
+
+          case 12:
+            decList = _context4.sent;
+            reformattedDic = decList.reduce(function (dic, e) {
+              var el = Array.isArray(e) ? e[0] : e;
+              dic[el.key] = el.value;
+              return dic;
+            }, {});
+            return _context4.abrupt('return', reformattedDic);
+
+          case 15:
+          case 'end':
+            return _context4.stop();
+        }
+      }
+    }, _callee4, undefined);
+  }));
+
+  return function list(_x8, _x9, _x10) {
+    return _ref3.apply(this, arguments);
+  };
+}();
+
 module.exports = {
   dbReady: dbReady,
   dbExists: dbExists,
   createPromisifiedHyperDB: createPromisifiedHyperDB,
   getHashParams: getHashParams,
   get: get,
-  put: put
+  put: put,
+  list: list
 };
