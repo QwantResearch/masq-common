@@ -98,8 +98,6 @@ const list = async (db, encKey, prefix) => {
 
   const list = await db.listAsync(prefix)
   if (list.length === 1 && list[0].key === '' && list[0].value === null) {
-    console.log('empty')
-
     return {}
   }
 
