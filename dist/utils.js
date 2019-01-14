@@ -220,16 +220,14 @@ var list = function () {
             list = _context4.sent;
 
             if (!(list.length === 1 && list[0].key === '' && list[0].value === null)) {
-              _context4.next = 10;
+              _context4.next = 9;
               break;
             }
 
-            console.log('empty');
-
             return _context4.abrupt('return', {});
 
-          case 10:
-            _context4.next = 12;
+          case 9:
+            _context4.next = 11;
             return Promise.all(list.map(function () {
               var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(elt) {
                 return _regenerator2.default.wrap(function _callee3$(_context3) {
@@ -260,7 +258,7 @@ var list = function () {
               };
             }()));
 
-          case 12:
+          case 11:
             decList = _context4.sent;
             reformattedDic = decList.reduce(function (dic, e) {
               var el = Array.isArray(e) ? e[0] : e;
@@ -269,7 +267,7 @@ var list = function () {
             }, {});
             return _context4.abrupt('return', reformattedDic);
 
-          case 15:
+          case 14:
           case 'end':
             return _context4.stop();
         }
