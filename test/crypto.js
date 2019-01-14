@@ -27,13 +27,13 @@ describe('MasqCommon crypto', function () {
     })
 
     it('Should reject if passphrase is not a string or is empty', async () => {
-      let err = '_ERROR_NOT_THROWN_'
+      let err = { type: '_ERROR_NOT_THROWN_' }
       try {
         await MasqCommon.crypto.derivePassphrase([])
       } catch (error) {
-        err = error.name
+        err = error
       }
-      chai.assert.equal(err, MasqCommon.errors.ERRORS.NOPASSPHRASE, 'Reject if passphrase is not a string')
+      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.NOPASSPHRASE, 'Reject if passphrase is not a string')
     })
 
     it('Should return true if the given passphrase is the same as the stored one', async () => {
@@ -104,13 +104,13 @@ describe('MasqCommon crypto', function () {
     })
 
     it('Should reject if the key is not a CryptoKey', async () => {
-      let err = '_ERROR_NOT_THROWN_'
+      let err = { type: '_ERROR_NOT_THROWN_' }
       try {
         await MasqCommon.crypto.encrypt([2, 3], { data: 'hello' })
       } catch (error) {
-        err = error.name
+        err = error
       }
-      chai.assert.equal(err, MasqCommon.errors.ERRORS.NOCRYPTOKEY, 'Reject if given key is not a CryptoKey')
+      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.NOCRYPTOKEY, 'Reject if given key is not a CryptoKey')
     })
 
     it('Should encrypt a message and encode with default format (hex)', async () => {
