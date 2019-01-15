@@ -23,8 +23,8 @@ describe('MasqCommon crypto', function () {
       chai.assert.equal(protectedMK.hashAlgo, 'SHA-256', 'Default hash algo is SHA-256')
       chai.assert.equal(protectedMK.iterations, 100000, 'Default iteration is 100000')
       chai.assert.lengthOf(protectedMK.salt, 32, 'Default salt is 128 bits array, 32 bytes as hex string')
-      chai.assert.exists(protectedMK.encMK.iv)
-      chai.assert.exists(protectedMK.encMK.ciphertext)
+      chai.assert.exists(protectedMK.encMasterKey.iv)
+      chai.assert.exists(protectedMK.encMasterKey.ciphertext)
     })
 
     it('Should reject if passphrase is not a string or is empty', async () => {
@@ -81,8 +81,8 @@ describe('MasqCommon crypto', function () {
       const protectedMK1 = await MasqCommon.crypto.derivePassphrase(passphrase)
       const protectedMK2 = await MasqCommon.crypto.derivePassphrase(passphrase)
       chai.assert.equal(protectedMK1.salt === protectedMK2.salt, false, 'Two different salt')
-      chai.assert.equal(protectedMK1.encMK.iv === protectedMK2.encMK.iv, false, 'Two different iv')
-      chai.assert.isFalse(protectedMK1.encMK.ciphertext === protectedMK2.encMK.ciphertext, false, 'Two different ciphertext')
+      chai.assert.equal(protectedMK1.encMasterKey.iv === protectedMK2.encMasterKey.iv, false, 'Two different iv')
+      chai.assert.isFalse(protectedMK1.encMasterKey.ciphertext === protectedMK2.encMasterKey.ciphertext, false, 'Two different ciphertext')
     })
 
     it('Should generate the same derived key if the salt is a UInt8Array or Buffer.from(UInt8array)', async () => {

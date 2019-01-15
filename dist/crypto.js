@@ -35,9 +35,9 @@ var getBuffer = function getBuffer(arr) {
 };
 
 /**
- @typedef protectedMK
+ @typedef protectedMasterKey
  @type {Object}
- @property {encMK} encMK - The encrypted MK
+ @property {encMasterKey} encMasterKey - The encrypted masterKey
  @property {string} hashAlgo - The hash algo for the PBKDF2 and the final hash to store it
  @property {sring} salt - The salt used to derive the key (format: hex string)
  @property {Number} iterations - The iteration # used during key derivation
@@ -53,10 +53,10 @@ var getBuffer = function getBuffer(arr) {
  */
 
 /**
- @typedef encMK
+ @typedef encMasterKey
  @type {Object}
- @property {string} iv - The iv used to encrypt the MK (format: hex string)
- @property {string} ciphertext - The encrypted MK (format: hex string)
+ @property {string} iv - The iv used to encrypt the masterKey (format: hex string)
+ @property {string} ciphertext - The encrypted masterKey (format: hex string)
  */
 
 var _checkPassphrase = function _checkPassphrase(passphrase) {
@@ -167,7 +167,7 @@ var hash256 = function () {
  */
 var derivePassphrase = function () {
   var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(passPhrase, salt) {
-    var hashAlgo, _salt, iterations, encMK;
+    var hashAlgo, _salt, iterations, encMasterKey;
 
     return _regenerator2.default.wrap(function _callee3$(_context3) {
       while (1) {
@@ -178,15 +178,15 @@ var derivePassphrase = function () {
             _salt = salt || genRandomBuffer(16);
             iterations = 100000;
             _context3.next = 6;
-            return deriveBitsGenAndEncMK(passPhrase, _salt, iterations, hashAlgo);
+            return deriveBitsGenAndencMasterKey(passPhrase, _salt, iterations, hashAlgo);
 
           case 6:
-            encMK = _context3.sent;
+            encMasterKey = _context3.sent;
             return _context3.abrupt('return', {
               salt: Buffer.from(_salt).toString('hex'),
               iterations: iterations,
               hashAlgo: hashAlgo,
-              encMK: encMK
+              encMasterKey: encMasterKey
             });
 
           case 8:
@@ -204,8 +204,8 @@ var derivePassphrase = function () {
 
 /**
  * Derive the passphrase with PBKDF2
- * Generate a AES key (MK)
- * Encrypt the MK
+ * Generate a AES key (masterKey)
+ * Encrypt the masterKey
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
@@ -213,9 +213,9 @@ var derivePassphrase = function () {
  * @param {string} [hash] The hash function used for derivation and final hash computing
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
-var deriveBitsGenAndEncMK = function () {
+var deriveBitsGenAndencMasterKey = function () {
   var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(passPhrase, salt, iterations, hash) {
-    var derivedPassphrase, KEK, MK, encMK;
+    var derivedPassphrase, KEK, masterKey, encMasterKey;
     return _regenerator2.default.wrap(function _callee4$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
@@ -230,13 +230,13 @@ var deriveBitsGenAndEncMK = function () {
 
           case 5:
             KEK = _context4.sent;
-            MK = genRandomBuffer(16);
+            masterKey = genRandomBuffer(16);
             _context4.next = 9;
-            return encrypt(KEK, Buffer.from(MK).toString('hex'));
+            return encrypt(KEK, Buffer.from(masterKey).toString('hex'));
 
           case 9:
-            encMK = _context4.sent;
-            return _context4.abrupt('return', encMK);
+            encMasterKey = _context4.sent;
+            return _context4.abrupt('return', encMasterKey);
 
           case 11:
           case 'end':
@@ -246,25 +246,25 @@ var deriveBitsGenAndEncMK = function () {
     }, _callee4, undefined);
   }));
 
-  return function deriveBitsGenAndEncMK(_x10, _x11, _x12, _x13) {
+  return function deriveBitsGenAndencMasterKey(_x10, _x11, _x12, _x13) {
     return _ref4.apply(this, arguments);
   };
 }();
 
 /**
  * Derive the passphrase with PBKDF2 to obtain the KEK
- * Decrypt the encypted MK
- * return the raw MK
+ * Decrypt the encypted masterKey
+ * return the raw masterKey
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
  * @param {string} [hash] The hash function used for derivation and final hash computing
- * @param {encMK} [encMK] The encrypted MK
+ * @param {encMasterKey} [encMasterKey] The encrypted masterKey
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
-var deriveBitsDecMK = function () {
-  var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(passPhrase, salt, iterations, hash, encMK) {
+var deriveBitsDecmasterKey = function () {
+  var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(passPhrase, salt, iterations, hash, encMasterKey) {
     var _salt, derivedPassphrase, KEK;
 
     return _regenerator2.default.wrap(function _callee5$(_context5) {
@@ -282,7 +282,7 @@ var deriveBitsDecMK = function () {
 
           case 6:
             KEK = _context5.sent;
-            return _context5.abrupt('return', decrypt(KEK, encMK));
+            return _context5.abrupt('return', decrypt(KEK, encMasterKey));
 
           case 8:
           case 'end':
@@ -292,37 +292,37 @@ var deriveBitsDecMK = function () {
     }, _callee5, undefined);
   }));
 
-  return function deriveBitsDecMK(_x14, _x15, _x16, _x17, _x18) {
+  return function deriveBitsDecmasterKey(_x14, _x15, _x16, _x17, _x18) {
     return _ref5.apply(this, arguments);
   };
 }();
 
-var requiredParameterProtectedMK = ['salt', 'iterations', 'encMK', 'hashAlgo'];
+var requiredParameterprotectedMasterKey = ['salt', 'iterations', 'encMasterKey', 'hashAlgo'];
 
 /**
  * Check a given passphrase by comparing it to the stored hash value (in HashedPassphrase object)
  *
  * @param {string} passphrase The passphrase
- * @param {protectedMK} protectedMK The protectedMK object
+ * @param {protectedMasterKey} protectedMasterKey The protectedMasterKey object
  * @returns {Promise<Boolean>}   A promise
  */
 var checkPassphrase = function () {
-  var _ref6 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee6(passPhrase, protectedMK) {
-    var salt, iterations, encMK, hashAlgo, MK;
+  var _ref6 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee6(passPhrase, protectedMasterKey) {
+    var salt, iterations, encMasterKey, hashAlgo, masterKey;
     return _regenerator2.default.wrap(function _callee6$(_context6) {
       while (1) {
         switch (_context6.prev = _context6.next) {
           case 0:
             _checkPassphrase(passPhrase);
-            (0, _errors.checkObject)(protectedMK, requiredParameterProtectedMK);
+            (0, _errors.checkObject)(protectedMasterKey, requiredParameterprotectedMasterKey);
             _context6.prev = 2;
-            salt = protectedMK.salt, iterations = protectedMK.iterations, encMK = protectedMK.encMK, hashAlgo = protectedMK.hashAlgo;
+            salt = protectedMasterKey.salt, iterations = protectedMasterKey.iterations, encMasterKey = protectedMasterKey.encMasterKey, hashAlgo = protectedMasterKey.hashAlgo;
             _context6.next = 6;
-            return deriveBitsDecMK(passPhrase, salt, iterations, hashAlgo, encMK);
+            return deriveBitsDecmasterKey(passPhrase, salt, iterations, hashAlgo, encMasterKey);
 
           case 6:
-            MK = _context6.sent;
-            return _context6.abrupt('return', Buffer.from(MK, 'hex'));
+            masterKey = _context6.sent;
+            return _context6.abrupt('return', Buffer.from(masterKey, 'hex'));
 
           case 10:
             _context6.prev = 10;

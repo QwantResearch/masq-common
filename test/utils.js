@@ -31,12 +31,9 @@ describe('MasqCommon utils', () => {
       const dec = await MasqCommon.utils.get(db, masterKey, 'one')
       chai.assert.deepEqual(dec, item)
       // check stored value, must contains iv and ciphertext properties
-      db.get('one', (err, node) => {
-        if (err) throw err
-        const enc = node.value
-        chai.assert.exists(enc.iv)
-        chai.assert.exists(enc.ciphertext)
-      })
+      const enc = (await db.getAsync('one')).value
+      chai.assert.exists(enc.iv)
+      chai.assert.exists(enc.ciphertext)
     })
 
     it('Should list (export) keys/values or return {} if empty', async () => {
