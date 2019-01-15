@@ -184,26 +184,6 @@ const decryptMasterKey = async (passPhrase, protectedMasterKey) => {
   }
 }
 
-// /**
-//  * Check a given passphrase by comparing it to the stored hash value (in HashedPassphrase object)
-//  *
-//  * @param {string} passphrase The passphrase
-//  * @param {protectedMasterKey} protectedMasterKey The protectedMasterKey object
-//  * @returns {Promise<Boolean>}   A promise
-//  */
-// const checkPassphrase = async (passPhrase, protectedMasterKey) => {
-//   _checkPassphrase(passPhrase)
-//   checkObject(protectedMasterKey, requiredParameterProtectedMasterKey)
-//   try {
-//     const { salt, iterations, encMasterKey, hashAlgo } = protectedMasterKey
-//     const masterKey = await deriveBitsDecmasterKey(passPhrase, salt, iterations, hashAlgo, encMasterKey)
-//     return Buffer.from(masterKey, 'hex')
-//   } catch (error) {
-//     // Wrong passphrase
-//     return null
-//   }
-// }
-
 /**
    * Generate an AES key based on the cipher mode and keysize
    * @param {boolean} [extractable] - Specify if the generated key is extractable
