@@ -3,6 +3,7 @@ const ERRORS = {
   NOT_CONNECTED: 'Not connected to Masq',
   UNABLE_TO_DECRYPT: 'Unable to decrypt data',
   WRONG_MESSAGE: 'Wrong message received',
+  WRONG_PASSPHRASE: 'Wrong passphrase',
   MASQ_ACCESS_REFUSED_BY_USER: 'Masq access refused by the user',
   INVALID_KEY: 'Invalid key',
   NODB: 'No DB provided',

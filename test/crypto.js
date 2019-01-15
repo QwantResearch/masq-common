@@ -19,18 +19,20 @@ describe('MasqCommon crypto', function () {
     let passphrase = 'mySecretPass'
 
     it('Should derive a passphrase [string] with default settings, gen MK and encrypt it ', async () => {
-      const protectedMK = await MasqCommon.crypto.derivePassphrase(passphrase)
-      chai.assert.equal(protectedMK.hashAlgo, 'SHA-256', 'Default hash algo is SHA-256')
-      chai.assert.equal(protectedMK.iterations, 100000, 'Default iteration is 100000')
-      chai.assert.lengthOf(protectedMK.salt, 32, 'Default salt is 128 bits array, 32 bytes as hex string')
-      chai.assert.exists(protectedMK.encMasterKey.iv)
-      chai.assert.exists(protectedMK.encMasterKey.ciphertext)
+      const protectedMasterKey = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
+      const { derivationParams, encryptedMasterKey } = protectedMasterKey
+      const { salt, iterations, hashAlgo } = derivationParams
+      chai.assert.equal(hashAlgo, 'SHA-256', 'Default hash algo is SHA-256')
+      chai.assert.equal(iterations, 100000, 'Default iteration is 100000')
+      chai.assert.lengthOf(salt, 32, 'Default salt is 128 bits array, 32 bytes as hex string')
+      chai.assert.exists(encryptedMasterKey.iv)
+      chai.assert.exists(encryptedMasterKey.ciphertext)
     })
 
     it('Should reject if passphrase is not a string or is empty', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
-        await MasqCommon.crypto.derivePassphrase([])
+        await MasqCommon.crypto.genEncryptedMasterKey([])
       } catch (error) {
         err = error
       }
@@ -38,15 +40,15 @@ describe('MasqCommon crypto', function () {
     })
 
     it('Should return the MK (an Array) if the given passphrase is the same as the stored one', async () => {
-      const protectedMK = await MasqCommon.crypto.derivePassphrase(passphrase)
-      const MK = await MasqCommon.crypto.checkPassphrase(passphrase, protectedMK)
+      const protectedMK = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
+      const MK = await MasqCommon.crypto.decryptMasterKey(passphrase, protectedMK)
       chai.assert.exists(MK, 'The check operation should return the MK')
       chai.assert.lengthOf(MK, 16, 'Default AES key is 128 bits long ')
     })
 
-    it('Should derive passphrase, gen MK, enc/dec a value', async () => {
-      const protectedMK = await MasqCommon.crypto.derivePassphrase(passphrase)
-      const MK = await MasqCommon.crypto.checkPassphrase(passphrase, protectedMK)
+    it('Should derive a key from passphrase, gen MK, enc/dec a value', async () => {
+      const protectedMK = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
+      const MK = await MasqCommon.crypto.decryptMasterKey(passphrase, protectedMK)
       const cryptokey = await MasqCommon.crypto.importKey(MK)
       const data = { 'hello': 'world' }
       const enc = await MasqCommon.crypto.encrypt(cryptokey, data)
@@ -54,35 +56,40 @@ describe('MasqCommon crypto', function () {
       chai.assert.exists(enc.ciphertext, 'ciphertext must exist')
 
       // Just to be sure that everything is working well.
-      const sameMK = await MasqCommon.crypto.checkPassphrase(passphrase, protectedMK)
+      const sameMK = await MasqCommon.crypto.decryptMasterKey(passphrase, protectedMK)
       const sameCryptokey = await MasqCommon.crypto.importKey(sameMK)
       const dec = await MasqCommon.crypto.decrypt(sameCryptokey, enc)
       chai.assert.deepEqual(dec, data, 'Must be the same')
     })
 
-    it('Should return false if the given passphrase is NOT the same as the stored one', async () => {
-      const protectedMK = await MasqCommon.crypto.derivePassphrase(passphrase)
-      const res = await MasqCommon.crypto.checkPassphrase(passphrase + 'modifed', protectedMK)
-      chai.assert.isNull(res, 'The check operation should return false')
+    it('Should reject if the given passphrase is NOT the same as the stored one', async () => {
+      let err = { type: '_ERROR_NOT_THROWN_' }
+      try {
+        const protectedMK = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
+        await MasqCommon.crypto.decryptMasterKey(passphrase + 'modifed', protectedMK)
+      } catch (error) {
+        err = error
+      }
+      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.WRONGPASSPHRASE, 'Reject if wrong passphrase')
     })
 
     it('Should reject if the any property of protectedMK is missing or empty', async () => {
       let err = '_ERROR_NOT_THROWN_'
       try {
-        await MasqCommon.crypto.checkPassphrase('secretPassphraseCandidate', {})
+        await MasqCommon.crypto.decryptMasterKey('secretPassphraseCandidate', {})
       } catch (error) {
         err = error.name
       }
       chai.assert.equal(err, MasqCommon.errors.ERRORS.WRONGPARAMETER, 'A requried property is missing')
     })
 
-    it('The salt and protectedMK must be different for two consecutive call to derivePassphrase even with the same passphrase', async () => {
+    it('The salt and protectedMK must be different for two consecutive call to genEncryptedMasterKey even with the same passphrase', async () => {
       const passphrase = 'secret'
-      const protectedMK1 = await MasqCommon.crypto.derivePassphrase(passphrase)
-      const protectedMK2 = await MasqCommon.crypto.derivePassphrase(passphrase)
-      chai.assert.equal(protectedMK1.salt === protectedMK2.salt, false, 'Two different salt')
-      chai.assert.equal(protectedMK1.encMasterKey.iv === protectedMK2.encMasterKey.iv, false, 'Two different iv')
-      chai.assert.isFalse(protectedMK1.encMasterKey.ciphertext === protectedMK2.encMasterKey.ciphertext, false, 'Two different ciphertext')
+      const protectedMK1 = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
+      const protectedMK2 = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
+      chai.assert.equal(protectedMK1.derivationParams.salt === protectedMK2.derivationParams.salt, false, 'Two different salt')
+      chai.assert.equal(protectedMK1.encryptedMasterKey.iv === protectedMK2.encryptedMasterKey.iv, false, 'Two different iv')
+      chai.assert.isFalse(protectedMK1.encryptedMasterKey.ciphertext === protectedMK2.encryptedMasterKey.ciphertext, false, 'Two different ciphertext')
     })
 
     it('Should generate the same derived key if the salt is a UInt8Array or Buffer.from(UInt8array)', async () => {
@@ -90,9 +97,9 @@ describe('MasqCommon crypto', function () {
       const salt1 = MasqCommon.crypto.genRandomBuffer(16)
       const salt2 = MasqCommon.crypto.getBuffer(salt1)
 
-      const protectedMK1 = await MasqCommon.crypto.derivePassphrase(passphrase, salt1)
-      const protectedMK2 = await MasqCommon.crypto.derivePassphrase(passphrase, salt2)
-      chai.assert.isTrue(protectedMK1.salt === protectedMK2.salt, 'Two identical salt')
+      const protectedMK1 = await MasqCommon.crypto.genEncryptedMasterKey(passphrase, salt1)
+      const protectedMK2 = await MasqCommon.crypto.genEncryptedMasterKey(passphrase, salt2)
+      chai.assert.isTrue(protectedMK1.derivationParams.salt === protectedMK2.derivationParams.salt, 'Two identical salt')
       chai.assert.isTrue(protectedMK1.storedHash === protectedMK2.storedHash, 'Two identical hashed Passphrase')
     })
   })
