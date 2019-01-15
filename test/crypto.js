@@ -87,9 +87,9 @@ describe('MasqCommon crypto', function () {
       const passphrase = 'secret'
       const protectedMK1 = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
       const protectedMK2 = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
-      chai.assert.equal(protectedMK1.derivationParams.salt === protectedMK2.derivationParams.salt, false, 'Two different salt')
-      chai.assert.equal(protectedMK1.encryptedMasterKey.iv === protectedMK2.encryptedMasterKey.iv, false, 'Two different iv')
-      chai.assert.isFalse(protectedMK1.encryptedMasterKey.ciphertext === protectedMK2.encryptedMasterKey.ciphertext, false, 'Two different ciphertext')
+      chai.assert.notStrictEqual(protectedMK1.derivationParams.salt, protectedMK2.derivationParams.salt, 'Two different salt')
+      chai.assert.notStrictEqual(protectedMK1.encryptedMasterKey.iv, protectedMK2.encryptedMasterKey.iv, 'Two different iv')
+      chai.assert.notStrictEqual(protectedMK1.encryptedMasterKey.ciphertext, protectedMK2.encryptedMasterKey.ciphertext, 'Two different ciphertext')
     })
 
     it('Should generate the same derived key if the salt is a UInt8Array or Buffer.from(UInt8array)', async () => {
@@ -99,8 +99,8 @@ describe('MasqCommon crypto', function () {
 
       const protectedMK1 = await MasqCommon.crypto.genEncryptedMasterKey(passphrase, salt1)
       const protectedMK2 = await MasqCommon.crypto.genEncryptedMasterKey(passphrase, salt2)
-      chai.assert.isTrue(protectedMK1.derivationParams.salt === protectedMK2.derivationParams.salt, 'Two identical salt')
-      chai.assert.isTrue(protectedMK1.storedHash === protectedMK2.storedHash, 'Two identical hashed Passphrase')
+      chai.assert.strictEqual(protectedMK1.derivationParams.salt, protectedMK2.derivationParams.salt, 'Two identical salt')
+      chai.assert.strictEqual(protectedMK1.storedHash, protectedMK2.storedHash, 'Two identical hashed Passphrase')
     })
   })
 
