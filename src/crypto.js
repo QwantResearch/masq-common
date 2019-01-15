@@ -124,7 +124,6 @@ const deriveKeyFromPassphrase = async (passPhrase, salt) => {
 
   const derivedKey = await deriveBits(passPhrase, _salt, iterations, hashAlgo)
   const key = await importKey(derivedKey)
-  // const encMasterKey = await deriveBitsGenAndencMasterKey(passPhrase, _salt, iterations, hashAlgo)
   return {
     derivationParams: {
       salt: Buffer.from(_salt).toString('hex'),
