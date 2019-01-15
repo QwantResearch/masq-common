@@ -7,7 +7,7 @@ const ERRORS = {
   MASQ_ACCESS_REFUSED_BY_USER: 'Masq access refused by the user',
   INVALID_KEY: 'Invalid key',
   NODB: 'No DB provided',
-  NOENCRYPTIONKEY: 'No encryption key provided'
+  NOENCRYPTIONKEY: 'No encryption key provided',
   MISSING_PROFILE_ID: 'Misssing profile id',
   MISSING_RESOURCE_ID: 'Missing resource id',
   INVALID_PASSPHRASE: 'Invalid Passphrase',
