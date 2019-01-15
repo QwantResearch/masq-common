@@ -35,6 +35,21 @@ var getBuffer = function getBuffer(arr) {
 };
 
 /**
+ @typedef protectedMasterKey
+ @type {Object}
+ @property {derivationParams} derivationParams - The derivation params.
+ @property {encryptedMasterKey} encryptedMasterKey - The encrypted masterKey
+ */
+
+/**
+ @typedef derivationParams
+ @type {Object}
+ @property {string} hashAlgo - The hash algo for the PBKDF2 and the final hash to store it
+ @property {sring} salt - The salt used to derive the key (format: hex string)
+ @property {Number} iterations - The iteration # used during key derivation
+ */
+
+/**
  @typedef HashedPassphrase
  @type {Object}
  @property {string} storedHash - The hash of the derived key (format: hex string)
@@ -43,29 +58,36 @@ var getBuffer = function getBuffer(arr) {
  @property {Number} iterations - The iteration # used during key derivation
  */
 
+/**
+ @typedef encryptedMasterKey
+ @type {Object}
+ @property {string} iv - The iv used to encrypt the masterKey (format: hex string)
+ @property {string} ciphertext - The encrypted masterKey (format: hex string)
+ */
+
 var _checkPassphrase = function _checkPassphrase(passphrase) {
   if (typeof passphrase !== 'string' || passphrase === '') {
-    throw (0, _errors.generateError)(_errors.ERRORS.NOPASSPHRASE);
+    throw new _errors.MasqError(_errors.ERRORS.INVALID_PASSPHRASE);
   }
 };
 
 var _checkCryptokey = function _checkCryptokey(key) {
   if (!key.type || key.type !== 'secret') {
-    throw (0, _errors.generateError)(_errors.ERRORS.NOCRYPTOKEY);
+    throw new _errors.MasqError(_errors.ERRORS.INVALID_CRYPTOKEY);
   }
 };
 
 /**
- * Generate a PBKDF2 derived key based on user given passPhrase
+ * Generate a PBKDF2 derived key (bits) based on user given passPhrase
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
- * @param {string} [hash] The hash function used for derivation
+ * @param {string} [hashAlgo] The hash function used for derivation
  * @returns {Promise<Uint8Array>}   A promise that contains the derived key
  */
 var deriveBits = function () {
-  var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(passPhrase, salt, iterations, hash) {
+  var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(passPhrase, salt, iterations, hashAlgo) {
     var baseKey, derivedKey;
     return _regenerator2.default.wrap(function _callee$(_context) {
       while (1) {
@@ -86,7 +108,7 @@ var deriveBits = function () {
               name: 'PBKDF2',
               salt: salt || new Uint8Array([]),
               iterations: iterations || 100000,
-              hash: hash || 'SHA-256'
+              hash: hashAlgo || 'SHA-256'
             }, baseKey, 128);
 
           case 6:
@@ -149,30 +171,38 @@ var hash256 = function () {
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @returns {Promise<HashedPassphrase>}   A promise that contains the derived key
  */
-var derivePassphrase = function () {
-  var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(passPhrase, salt) {
-    var _salt, iterations, hashedValue;
+var deriveKeyFromPassphrase = function () {
+  var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(passPhrase, salt, iterations, hashAlgo) {
+    var _hashAlgo, _salt, _iterations, derivedKey, key;
 
     return _regenerator2.default.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
             _checkPassphrase(passPhrase);
+            _hashAlgo = hashAlgo || 'SHA-256';
             _salt = salt || genRandomBuffer(16);
-            iterations = 100000;
-            _context3.next = 5;
-            return deriveBitsAndHash(passPhrase, _salt, iterations);
+            _iterations = iterations || 100000;
+            _context3.next = 6;
+            return deriveBits(passPhrase, _salt, _iterations, _hashAlgo);
 
-          case 5:
-            hashedValue = _context3.sent;
+          case 6:
+            derivedKey = _context3.sent;
+            _context3.next = 9;
+            return importKey(derivedKey);
+
+          case 9:
+            key = _context3.sent;
             return _context3.abrupt('return', {
-              salt: Buffer.from(_salt).toString('hex'),
-              iterations: iterations,
-              hashAlgo: 'SHA-256',
-              storedHash: Buffer.from(hashedValue).toString('hex')
+              derivationParams: {
+                salt: Buffer.from(_salt).toString('hex'),
+                iterations: _iterations,
+                hashAlgo: _hashAlgo
+              },
+              key: key
             });
 
-          case 7:
+          case 11:
           case 'end':
             return _context3.stop();
         }
@@ -180,40 +210,50 @@ var derivePassphrase = function () {
     }, _callee3, undefined);
   }));
 
-  return function derivePassphrase(_x8, _x9) {
+  return function deriveKeyFromPassphrase(_x8, _x9, _x10, _x11) {
     return _ref3.apply(this, arguments);
   };
 }();
 
 /**
- * Derive the passphrase with PBKDF2 and hash the output with the given hash function
+ * Derive the passphrase with PBKDF2
+ * Generate a AES key (masterKey)
+ * Encrypt the masterKey
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
- * @param {string} [hash] The hash function used for derivation and final hash computing
+ * @param {string} [hashAlgo] The hash function used for derivation and final hash computing
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
-var deriveBitsAndHash = function () {
-  var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(passPhrase, salt, iterations, hash) {
-    var derivedPassphrase, finalHash;
+var genEncryptedMasterKey = function () {
+  var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(passPhrase, salt, iterations, hashAlgo) {
+    var keyEncryptionKey, masterKey, encryptedMasterKey;
     return _regenerator2.default.wrap(function _callee4$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
             _context4.next = 2;
-            return deriveBits(passPhrase, salt, iterations, hash);
+            return deriveKeyFromPassphrase(passPhrase, salt, iterations, hashAlgo);
 
           case 2:
-            derivedPassphrase = _context4.sent;
+            keyEncryptionKey = _context4.sent;
             _context4.next = 5;
-            return hash256(derivedPassphrase);
+            return genRandomBuffer(16);
 
           case 5:
-            finalHash = _context4.sent;
-            return _context4.abrupt('return', finalHash);
+            masterKey = _context4.sent;
+            _context4.next = 8;
+            return encrypt(keyEncryptionKey.key, Buffer.from(masterKey).toString('hex'));
 
-          case 7:
+          case 8:
+            encryptedMasterKey = _context4.sent;
+            return _context4.abrupt('return', {
+              derivationParams: keyEncryptionKey.derivationParams,
+              encryptedMasterKey: encryptedMasterKey
+            });
+
+          case 10:
           case 'end':
             return _context4.stop();
         }
@@ -221,46 +261,65 @@ var deriveBitsAndHash = function () {
     }, _callee4, undefined);
   }));
 
-  return function deriveBitsAndHash(_x10, _x11, _x12, _x13) {
+  return function genEncryptedMasterKey(_x12, _x13, _x14, _x15) {
     return _ref4.apply(this, arguments);
   };
 }();
-
-var requiredParameterHashedPassphrase = ['salt', 'iterations', 'storedHash', 'hashAlgo'];
+var requiredParameterProtectedMasterKey = ['encryptedMasterKey', 'derivationParams'];
 
 /**
- * Check a given passphrase by comparing it to the stored hash value (in HashedPassphrase object)
+ * Derive a given key by deriving
+ * the encryption key from a
+ * given passphrase and derivation params.
  *
- * @param {string} passphrase The passphrase
- * @param {HashedPassphrase} hashedPassphrase The HashedPassphrase object
- * @returns {Promise<Boolean>}   A promise
+ * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
+ * @param {protectedMasterKey} protectedMasterKey - The same object returned by genEncryptedMasterKey
+ * @returns {Promise<Uint8Array>}   A promise that contains the masterKey
  */
-var checkPassphrase = function () {
-  var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(passPhrase, hashedPassphrase) {
-    var salt, iterations, storedHash, hashAlgo, hashCandidate;
+var decryptMasterKey = function () {
+  var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(passPhrase, protectedMasterKey) {
+    var derivationParams, encryptedMasterKey, salt, iterations, hashAlgo, _salt, derivedKey, keyEncryptionKey, masterKeyHex;
+
     return _regenerator2.default.wrap(function _callee5$(_context5) {
       while (1) {
         switch (_context5.prev = _context5.next) {
           case 0:
-            _checkPassphrase(passPhrase);
-            (0, _errors.checkObject)(hashedPassphrase, requiredParameterHashedPassphrase);
-            salt = hashedPassphrase.salt, iterations = hashedPassphrase.iterations, storedHash = hashedPassphrase.storedHash, hashAlgo = hashedPassphrase.hashAlgo;
-            _context5.next = 5;
-            return deriveBitsAndHash(passPhrase, Buffer.from(salt, 'hex'), iterations, hashAlgo);
-
-          case 5:
-            hashCandidate = _context5.sent;
-            return _context5.abrupt('return', Buffer.from(hashCandidate).toString('hex') === storedHash);
+            (0, _errors.checkObject)(protectedMasterKey, requiredParameterProtectedMasterKey);
+            derivationParams = protectedMasterKey.derivationParams, encryptedMasterKey = protectedMasterKey.encryptedMasterKey;
+            salt = derivationParams.salt, iterations = derivationParams.iterations, hashAlgo = derivationParams.hashAlgo;
+            _salt = typeof salt === 'string' ? Buffer.from(salt, 'hex') : salt;
+            _context5.prev = 4;
+            _context5.next = 7;
+            return deriveBits(passPhrase, _salt, iterations, hashAlgo);
 
           case 7:
+            derivedKey = _context5.sent;
+            _context5.next = 10;
+            return importKey(derivedKey);
+
+          case 10:
+            keyEncryptionKey = _context5.sent;
+            _context5.next = 13;
+            return decrypt(keyEncryptionKey, encryptedMasterKey);
+
+          case 13:
+            masterKeyHex = _context5.sent;
+            return _context5.abrupt('return', Buffer.from(masterKeyHex, 'hex'));
+
+          case 17:
+            _context5.prev = 17;
+            _context5.t0 = _context5['catch'](4);
+            throw new _errors.MasqError(_errors.ERRORS.WRONG_PASSPHRASE);
+
+          case 20:
           case 'end':
             return _context5.stop();
         }
       }
-    }, _callee5, undefined);
+    }, _callee5, undefined, [[4, 17]]);
   }));
 
-  return function checkPassphrase(_x14, _x15) {
+  return function decryptMasterKey(_x16, _x17) {
     return _ref5.apply(this, arguments);
   };
 }();
@@ -318,7 +377,7 @@ var exportKey = function () {
     }, _callee6, undefined);
   }));
 
-  return function exportKey(_x17) {
+  return function exportKey(_x19) {
     return _ref6.apply(this, arguments);
   };
 }();
@@ -384,7 +443,7 @@ var decryptBuffer = function () {
     }, _callee7, undefined, [[0, 7]]);
   }));
 
-  return function decryptBuffer(_x20, _x21, _x22) {
+  return function decryptBuffer(_x22, _x23, _x24) {
     return _ref7.apply(this, arguments);
   };
 }();
@@ -423,7 +482,7 @@ var encryptBuffer = function () {
     }, _callee8, undefined);
   }));
 
-  return function encryptBuffer(_x23, _x24, _x25) {
+  return function encryptBuffer(_x25, _x26, _x27) {
     return _ref8.apply(this, arguments);
   };
 }();
@@ -446,7 +505,7 @@ var encrypt = function () {
           case 0:
             _checkCryptokey(key);
             context = {
-              iv: genRandomBuffer(16),
+              iv: genRandomBuffer(key.algorithm.name === 'AES-GCM' ? 12 : 16),
               plaintext: Buffer.from(JSON.stringify(data))
 
               // Prepare cipher context, depends on cipher mode
@@ -473,7 +532,7 @@ var encrypt = function () {
     }, _callee9, undefined);
   }));
 
-  return function encrypt(_x27, _x28) {
+  return function encrypt(_x29, _x30) {
     return _ref9.apply(this, arguments);
   };
 }();
@@ -494,32 +553,40 @@ var decrypt = function () {
         switch (_context10.prev = _context10.next) {
           case 0:
             _checkCryptokey(key);
+
             context = {
               ciphertext: ciphertext.hasOwnProperty('ciphertext') ? Buffer.from(ciphertext.ciphertext, format) : '',
               // IV is 128 bits long === 16 bytes
               iv: ciphertext.hasOwnProperty('iv') ? Buffer.from(ciphertext.iv, format) : ''
+
               // Prepare cipher context, depends on cipher mode
             };
             cipherContext = {
               name: key.algorithm.name,
               iv: context.iv
             };
-            _context10.next = 5;
+            _context10.prev = 3;
+            _context10.next = 6;
             return decryptBuffer(key, context.ciphertext, cipherContext);
 
-          case 5:
+          case 6:
             decrypted = _context10.sent;
             return _context10.abrupt('return', JSON.parse(Buffer.from(decrypted).toString()));
 
-          case 7:
+          case 10:
+            _context10.prev = 10;
+            _context10.t0 = _context10['catch'](3);
+            throw new _errors.MasqError(_errors.ERRORS.UNABLE_TO_DECRYPT);
+
+          case 13:
           case 'end':
             return _context10.stop();
         }
       }
-    }, _callee10, undefined);
+    }, _callee10, undefined, [[3, 10]]);
   }));
 
-  return function decrypt(_x30, _x31) {
+  return function decrypt(_x32, _x33) {
     return _ref10.apply(this, arguments);
   };
 }();
@@ -532,6 +599,6 @@ module.exports = {
   genAESKey: genAESKey,
   genRandomBuffer: genRandomBuffer,
   getBuffer: getBuffer,
-  checkPassphrase: checkPassphrase,
-  derivePassphrase: derivePassphrase
+  decryptMasterKey: decryptMasterKey,
+  genEncryptedMasterKey: genEncryptedMasterKey
 };
