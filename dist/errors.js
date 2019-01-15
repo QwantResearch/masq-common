@@ -27,7 +27,14 @@ var ERRORS = {
   MASQ_ACCESS_REFUSED_BY_USER: 'Masq access refused by the user',
   INVALID_KEY: 'Invalid key',
   NODB: 'No DB provided',
-  NOENCRYPTIONKEY: 'No encryption key provided'
+  NOENCRYPTIONKEY: 'No encryption key provided',
+  MISSING_PROFILE_ID: 'Misssing profile id',
+  MISSING_RESOURCE_ID: 'Missing resource id',
+  INVALID_PASSPHRASE: 'Invalid Passphrase',
+  USERNAME_ALREADY_TAKEN: 'This username already exists',
+  AUTHORIZE_DB_KEY_FAILED: 'Authorization of db key for write access failed',
+  PROFILE_NOT_OPENED: 'Not logged in and trying to execute a function only accessible when logged in',
+  DISCONNECTED_DURING_LOGIN: 'Disconnected during login procedure'
 };
 
 var MasqError = function (_Error) {

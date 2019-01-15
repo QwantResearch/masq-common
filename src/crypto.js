@@ -116,19 +116,19 @@ const hash256 = async (msg, type = 'SHA-256') => {
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @returns {Promise<HashedPassphrase>}   A promise that contains the derived key
  */
-const deriveKeyFromPassphrase = async (passPhrase, salt) => {
+const deriveKeyFromPassphrase = async (passPhrase, salt, iterations, hashAlgo) => {
   _checkPassphrase(passPhrase)
-  const hashAlgo = 'SHA-256'
+  const _hashAlgo = hashAlgo || 'SHA-256'
   const _salt = salt || genRandomBuffer(16)
-  const iterations = 100000
+  const _iterations = iterations || 100000
 
-  const derivedKey = await deriveBits(passPhrase, _salt, iterations, hashAlgo)
+  const derivedKey = await deriveBits(passPhrase, _salt, _iterations, _hashAlgo)
   const key = await importKey(derivedKey)
   return {
     derivationParams: {
       salt: Buffer.from(_salt).toString('hex'),
-      iterations: iterations,
-      hashAlgo
+      iterations: _iterations,
+      hashAlgo: _hashAlgo
     },
     key
   }
@@ -142,12 +142,12 @@ const deriveKeyFromPassphrase = async (passPhrase, salt) => {
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
- * @param {string} [hash] The hash function used for derivation and final hash computing
+ * @param {string} [hashAlgo] The hash function used for derivation and final hash computing
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
-const genEncryptedMasterKey = async (passPhrase, salt, iterations, hash) => {
+const genEncryptedMasterKey = async (passPhrase, salt, iterations, hashAlgo) => {
   // derive key encryption key from passphrase
-  const keyEncryptionKey = await deriveKeyFromPassphrase(passPhrase, salt)
+  const keyEncryptionKey = await deriveKeyFromPassphrase(passPhrase, salt, iterations, hashAlgo)
 
   // Generate the masterKey
   const masterKey = await genRandomBuffer(16)

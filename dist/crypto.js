@@ -172,19 +172,19 @@ var hash256 = function () {
  * @returns {Promise<HashedPassphrase>}   A promise that contains the derived key
  */
 var deriveKeyFromPassphrase = function () {
-  var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(passPhrase, salt) {
-    var hashAlgo, _salt, iterations, derivedKey, key;
+  var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(passPhrase, salt, iterations, hashAlgo) {
+    var _hashAlgo, _salt, _iterations, derivedKey, key;
 
     return _regenerator2.default.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
             _checkPassphrase(passPhrase);
-            hashAlgo = 'SHA-256';
+            _hashAlgo = hashAlgo || 'SHA-256';
             _salt = salt || genRandomBuffer(16);
-            iterations = 100000;
+            _iterations = iterations || 100000;
             _context3.next = 6;
-            return deriveBits(passPhrase, _salt, iterations, hashAlgo);
+            return deriveBits(passPhrase, _salt, _iterations, _hashAlgo);
 
           case 6:
             derivedKey = _context3.sent;
@@ -196,8 +196,8 @@ var deriveKeyFromPassphrase = function () {
             return _context3.abrupt('return', {
               derivationParams: {
                 salt: Buffer.from(_salt).toString('hex'),
-                iterations: iterations,
-                hashAlgo: hashAlgo
+                iterations: _iterations,
+                hashAlgo: _hashAlgo
               },
               key: key
             });
@@ -210,7 +210,7 @@ var deriveKeyFromPassphrase = function () {
     }, _callee3, undefined);
   }));
 
-  return function deriveKeyFromPassphrase(_x8, _x9) {
+  return function deriveKeyFromPassphrase(_x8, _x9, _x10, _x11) {
     return _ref3.apply(this, arguments);
   };
 }();
@@ -223,18 +223,18 @@ var deriveKeyFromPassphrase = function () {
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
- * @param {string} [hash] The hash function used for derivation and final hash computing
+ * @param {string} [hashAlgo] The hash function used for derivation and final hash computing
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
 var genEncryptedMasterKey = function () {
-  var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(passPhrase, salt, iterations, hash) {
+  var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(passPhrase, salt, iterations, hashAlgo) {
     var keyEncryptionKey, masterKey, encryptedMasterKey;
     return _regenerator2.default.wrap(function _callee4$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
             _context4.next = 2;
-            return deriveKeyFromPassphrase(passPhrase, salt);
+            return deriveKeyFromPassphrase(passPhrase, salt, iterations, hashAlgo);
 
           case 2:
             keyEncryptionKey = _context4.sent;
@@ -261,7 +261,7 @@ var genEncryptedMasterKey = function () {
     }, _callee4, undefined);
   }));
 
-  return function genEncryptedMasterKey(_x10, _x11, _x12, _x13) {
+  return function genEncryptedMasterKey(_x12, _x13, _x14, _x15) {
     return _ref4.apply(this, arguments);
   };
 }();
@@ -319,7 +319,7 @@ var decryptMasterKey = function () {
     }, _callee5, undefined, [[4, 17]]);
   }));
 
-  return function decryptMasterKey(_x14, _x15) {
+  return function decryptMasterKey(_x16, _x17) {
     return _ref5.apply(this, arguments);
   };
 }();
@@ -377,7 +377,7 @@ var exportKey = function () {
     }, _callee6, undefined);
   }));
 
-  return function exportKey(_x17) {
+  return function exportKey(_x19) {
     return _ref6.apply(this, arguments);
   };
 }();
@@ -443,7 +443,7 @@ var decryptBuffer = function () {
     }, _callee7, undefined, [[0, 7]]);
   }));
 
-  return function decryptBuffer(_x20, _x21, _x22) {
+  return function decryptBuffer(_x22, _x23, _x24) {
     return _ref7.apply(this, arguments);
   };
 }();
@@ -482,7 +482,7 @@ var encryptBuffer = function () {
     }, _callee8, undefined);
   }));
 
-  return function encryptBuffer(_x23, _x24, _x25) {
+  return function encryptBuffer(_x25, _x26, _x27) {
     return _ref8.apply(this, arguments);
   };
 }();
@@ -532,7 +532,7 @@ var encrypt = function () {
     }, _callee9, undefined);
   }));
 
-  return function encrypt(_x27, _x28) {
+  return function encrypt(_x29, _x30) {
     return _ref9.apply(this, arguments);
   };
 }();
@@ -580,7 +580,7 @@ var decrypt = function () {
     }, _callee10, undefined);
   }));
 
-  return function decrypt(_x30, _x31) {
+  return function decrypt(_x32, _x33) {
     return _ref10.apply(this, arguments);
   };
 }();
