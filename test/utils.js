@@ -68,13 +68,14 @@ describe('MasqCommon utils', () => {
     it('Should reject if an encryption key is not given to put', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
-        await MasqCommon.utils.put({})
+        const db = await MasqCommon.utils.createPromisifiedHyperDB('dB5')
+        await MasqCommon.utils.put(db)
       } catch (error) {
         err = error
       }
       chai.assert.equal(err.type, MasqCommon.errors.ERRORS.NOENCRYPTIONKEY, 'Reject if no encryption  is given')
     })
-    it('Should reject if a db is not given to get', async () => {
+    it('Should reject if a db is not given to get/ or is not an hyperDB instance', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
         await MasqCommon.utils.get()
@@ -86,7 +87,8 @@ describe('MasqCommon utils', () => {
     it('Should reject if an encryption key is not given to get', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
-        await MasqCommon.utils.get({})
+        const db = await MasqCommon.utils.createPromisifiedHyperDB('dB5')
+        await MasqCommon.utils.get(db)
       } catch (error) {
         err = error
       }
@@ -104,7 +106,8 @@ describe('MasqCommon utils', () => {
     it('Should reject if an encryption key is not given to list', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
-        await MasqCommon.utils.list({})
+        const db = await MasqCommon.utils.createPromisifiedHyperDB('dB5')
+        await MasqCommon.utils.list(db)
       } catch (error) {
         err = error
       }
