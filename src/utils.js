@@ -12,10 +12,8 @@ function createPromisifiedHyperDB (name, hexKey) {
 }
 
 function dbReady (db) {
-  return new Promise((resolve, reject) => {
-    db.on('ready', () => {
-      resolve()
-    })
+  return new Promise((resolve) => {
+    db.ready(resolve)
   })
 }
 
