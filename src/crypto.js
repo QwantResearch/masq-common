@@ -53,13 +53,13 @@ const getBuffer = (arr) => {
 
 const _checkPassphrase = (passphrase) => {
   if (typeof passphrase !== 'string' || passphrase === '') {
-    throw new MasqError(ERRORS.NOPASSPHRASE)
+    throw new MasqError(ERRORS.INVALID_PASSPHRASE)
   }
 }
 
 const _checkCryptokey = (key) => {
   if (!key.type || key.type !== 'secret') {
-    throw new MasqError(ERRORS.NOCRYPTOKEY)
+    throw new MasqError(ERRORS.INVALID_CRYPTOKEY)
   }
 }
 
@@ -179,7 +179,7 @@ const decryptMasterKey = async (passPhrase, protectedMasterKey) => {
     const masterKeyHex = await decrypt(keyEncryptionKey, encryptedMasterKey)
     return Buffer.from(masterKeyHex, 'hex')
   } catch (error) {
-    throw new MasqError(ERRORS.WRONGPASSPHRASE)
+    throw new MasqError(ERRORS.WRONG_PASSPHRASE)
   }
 }
 
@@ -284,6 +284,7 @@ const encrypt = async (key, data, format = 'hex') => {
     name: key.algorithm.name,
     iv: context.iv
   }
+
   const encrypted = await encryptBuffer(key, context.plaintext, cipherContext)
   return {
     ciphertext: Buffer.from(encrypted).toString(format),
@@ -312,9 +313,12 @@ const decrypt = async (key, ciphertext, format = 'hex') => {
     name: key.algorithm.name,
     iv: context.iv
   }
-
-  const decrypted = await decryptBuffer(key, context.ciphertext, cipherContext)
-  return JSON.parse(Buffer.from(decrypted).toString())
+  try {
+    const decrypted = await decryptBuffer(key, context.ciphertext, cipherContext)
+    return JSON.parse(Buffer.from(decrypted).toString())
+  } catch (error) {
+    throw new MasqError(ERRORS.UNABLE_TO_DECRYPT)
+  }
 }
 
 module.exports = {

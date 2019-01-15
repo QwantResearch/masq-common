@@ -67,13 +67,13 @@ var getBuffer = function getBuffer(arr) {
 
 var _checkPassphrase = function _checkPassphrase(passphrase) {
   if (typeof passphrase !== 'string' || passphrase === '') {
-    throw new _errors.MasqError(_errors.ERRORS.NOPASSPHRASE);
+    throw new _errors.MasqError(_errors.ERRORS.INVALID_PASSPHRASE);
   }
 };
 
 var _checkCryptokey = function _checkCryptokey(key) {
   if (!key.type || key.type !== 'secret') {
-    throw new _errors.MasqError(_errors.ERRORS.NOCRYPTOKEY);
+    throw new _errors.MasqError(_errors.ERRORS.INVALID_CRYPTOKEY);
   }
 };
 
@@ -309,7 +309,7 @@ var decryptMasterKey = function () {
           case 17:
             _context5.prev = 17;
             _context5.t0 = _context5['catch'](4);
-            throw new _errors.MasqError(_errors.ERRORS.WRONGPASSPHRASE);
+            throw new _errors.MasqError(_errors.ERRORS.WRONG_PASSPHRASE);
 
           case 20:
           case 'end':
@@ -565,19 +565,25 @@ var decrypt = function () {
               name: key.algorithm.name,
               iv: context.iv
             };
-            _context10.next = 5;
+            _context10.prev = 3;
+            _context10.next = 6;
             return decryptBuffer(key, context.ciphertext, cipherContext);
 
-          case 5:
+          case 6:
             decrypted = _context10.sent;
             return _context10.abrupt('return', JSON.parse(Buffer.from(decrypted).toString()));
 
-          case 7:
+          case 10:
+            _context10.prev = 10;
+            _context10.t0 = _context10['catch'](3);
+            throw new _errors.MasqError(_errors.ERRORS.UNABLE_TO_DECRYPT);
+
+          case 13:
           case 'end':
             return _context10.stop();
         }
       }
-    }, _callee10, undefined);
+    }, _callee10, undefined, [[3, 10]]);
   }));
 
   return function decrypt(_x32, _x33) {

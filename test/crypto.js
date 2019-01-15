@@ -36,7 +36,7 @@ describe('MasqCommon crypto', function () {
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.NOPASSPHRASE, 'Reject if passphrase is not a string')
+      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.INVALID_PASSPHRASE, 'Reject if passphrase is not a string')
     })
 
     it('Should return the MK (an Array) if the given passphrase is the same as the stored one', async () => {
@@ -70,7 +70,8 @@ describe('MasqCommon crypto', function () {
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.WRONGPASSPHRASE, 'Reject if wrong passphrase')
+
+      chai.assert.strictEqual(err.type, MasqCommon.errors.ERRORS.WRONG_PASSPHRASE, 'Reject if wrong passphrase')
     })
 
     it('Should reject if the any property of protectedMK is missing or empty', async () => {
@@ -80,7 +81,7 @@ describe('MasqCommon crypto', function () {
       } catch (error) {
         err = error.name
       }
-      chai.assert.equal(err, MasqCommon.errors.ERRORS.WRONGPARAMETER, 'A requried property is missing')
+      chai.assert.equal(err, MasqCommon.errors.ERRORS.WRONG_PARAMETER, 'A requried property is missing')
     })
 
     it('The salt and protectedMK must be different for two consecutive call to genEncryptedMasterKey even with the same passphrase', async () => {
@@ -136,7 +137,7 @@ describe('MasqCommon crypto', function () {
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.NOCRYPTOKEY, 'Reject if given key is not a CryptoKey')
+      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.INVALID_CRYPTOKEY, 'Reject if given key is not a CryptoKey')
     })
 
     it('Should encrypt a message and encode with default format (hex)', async () => {
@@ -180,6 +181,36 @@ describe('MasqCommon crypto', function () {
       const cryptoKey = await MasqCommon.crypto.importKey(jwkKey, 'jwk')
       const plaintext = await MasqCommon.crypto.decrypt(cryptoKey, ciphertext)
       chai.assert.deepEqual(plaintext, message, 'Must get the initial message after decryption')
+    })
+    it('Should fail to decrypt a message with default parameters (wrong iv)', async () => {
+      const message = { data: 'hello' }
+      const key = await MasqCommon.crypto.genAESKey()
+      const ciphertext = await MasqCommon.crypto.encrypt(key, message)
+
+      let err = { type: '_ERROR_NOT_THROWN_' }
+      try {
+        ciphertext.iv = ciphertext.iv.slice(0, 10)
+        await MasqCommon.crypto.decrypt(key, ciphertext)
+      } catch (error) {
+        err = error
+      }
+
+      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.UNABLE_TO_DECRYPT, 'Reject if wrong iv')
+    })
+    it('Should fail to decrypt a message with default parameters (wrong key)', async () => {
+      const message = { data: 'hello' }
+      const key = await MasqCommon.crypto.genAESKey()
+      const ciphertext = await MasqCommon.crypto.encrypt(key, message)
+
+      let err = { type: '_ERROR_NOT_THROWN_' }
+      try {
+        const key2 = await MasqCommon.crypto.genAESKey()
+        await MasqCommon.crypto.decrypt(key2, ciphertext)
+      } catch (error) {
+        err = error
+      }
+
+      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.UNABLE_TO_DECRYPT, 'Reject if wrong key')
     })
   })
 })

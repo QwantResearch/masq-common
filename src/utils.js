@@ -62,8 +62,8 @@ function getHashParams (link) {
    * @returns {Promise}
    */
 const get = async (db, encKey, key) => {
-  if (!(db instanceof hyperdb)) throw new MasqError(ERRORS.NODB)
-  if (!encKey) throw new MasqError(ERRORS.NOENCRYPTIONKEY)
+  if (!(db instanceof hyperdb)) throw new MasqError(ERRORS.NO_DB)
+  if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
   const node = await db.getAsync(key)
   if (!node) return null
   const dec = await decrypt(encKey, node.value)
@@ -79,8 +79,8 @@ const get = async (db, encKey, key) => {
    * @returns {Promise}
    */
 const put = async (db, encKey, key, value) => {
-  if (!(db instanceof hyperdb)) throw new MasqError(ERRORS.NODB)
-  if (!encKey) throw new MasqError(ERRORS.NOENCRYPTIONKEY)
+  if (!(db instanceof hyperdb)) throw new MasqError(ERRORS.NO_DB)
+  if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
   const enc = await encrypt(encKey, value)
   return db.putAsync(key, enc)
 }
@@ -93,8 +93,8 @@ const put = async (db, encKey, key, value) => {
    * @returns {Promise}
    */
 const list = async (db, encKey, prefix) => {
-  if (!(db instanceof hyperdb)) throw new MasqError(ERRORS.NODB)
-  if (!encKey) throw new MasqError(ERRORS.NOENCRYPTIONKEY)
+  if (!(db instanceof hyperdb)) throw new MasqError(ERRORS.NO_DB)
+  if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
 
   const list = await db.listAsync(prefix)
   if (list.length === 1 && list[0].key === '' && list[0].value === null) {

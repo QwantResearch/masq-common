@@ -87,7 +87,7 @@ var get = function () {
               break;
             }
 
-            throw new _errors.MasqError(_errors.ERRORS.NODB);
+            throw new _errors.MasqError(_errors.ERRORS.NO_DB);
 
           case 2:
             if (encKey) {
@@ -95,7 +95,7 @@ var get = function () {
               break;
             }
 
-            throw new _errors.MasqError(_errors.ERRORS.NOENCRYPTIONKEY);
+            throw new _errors.MasqError(_errors.ERRORS.NO_ENCRYPTION_KEY);
 
           case 4:
             _context.next = 6;
@@ -152,7 +152,7 @@ var put = function () {
               break;
             }
 
-            throw new _errors.MasqError(_errors.ERRORS.NODB);
+            throw new _errors.MasqError(_errors.ERRORS.NO_DB);
 
           case 2:
             if (encKey) {
@@ -160,7 +160,7 @@ var put = function () {
               break;
             }
 
-            throw new _errors.MasqError(_errors.ERRORS.NOENCRYPTIONKEY);
+            throw new _errors.MasqError(_errors.ERRORS.NO_ENCRYPTION_KEY);
 
           case 4:
             _context2.next = 6;
@@ -202,7 +202,7 @@ var list = function () {
               break;
             }
 
-            throw new _errors.MasqError(_errors.ERRORS.NODB);
+            throw new _errors.MasqError(_errors.ERRORS.NO_DB);
 
           case 2:
             if (encKey) {
@@ -210,7 +210,7 @@ var list = function () {
               break;
             }
 
-            throw new _errors.MasqError(_errors.ERRORS.NOENCRYPTIONKEY);
+            throw new _errors.MasqError(_errors.ERRORS.NO_ENCRYPTION_KEY);
 
           case 4:
             _context4.next = 6;
