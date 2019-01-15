@@ -1,4 +1,4 @@
-import { generateError, ERRORS, checkObject, MasqError } from './errors'
+import { ERRORS, checkObject, MasqError } from './errors'
 
 const genRandomBuffer = (len = 16) => {
   const values = window.crypto.getRandomValues(new Uint8Array(len))
@@ -21,6 +21,21 @@ const getBuffer = (arr) => {
 }
 
 /**
+ @typedef protectedMasterKey
+ @type {Object}
+ @property {derivationParams} derivationParams - The derivation params.
+ @property {encryptedMasterKey} encryptedMasterKey - The encrypted masterKey
+ */
+
+/**
+ @typedef derivationParams
+ @type {Object}
+ @property {string} hashAlgo - The hash algo for the PBKDF2 and the final hash to store it
+ @property {sring} salt - The salt used to derive the key (format: hex string)
+ @property {Number} iterations - The iteration # used during key derivation
+ */
+
+/**
  @typedef HashedPassphrase
  @type {Object}
  @property {string} storedHash - The hash of the derived key (format: hex string)
@@ -29,28 +44,35 @@ const getBuffer = (arr) => {
  @property {Number} iterations - The iteration # used during key derivation
  */
 
+/**
+ @typedef encryptedMasterKey
+ @type {Object}
+ @property {string} iv - The iv used to encrypt the masterKey (format: hex string)
+ @property {string} ciphertext - The encrypted masterKey (format: hex string)
+ */
+
 const _checkPassphrase = (passphrase) => {
   if (typeof passphrase !== 'string' || passphrase === '') {
-    throw generateError(ERRORS.NOPASSPHRASE)
+    throw new MasqError(ERRORS.INVALID_PASSPHRASE)
   }
 }
 
 const _checkCryptokey = (key) => {
   if (!key.type || key.type !== 'secret') {
-    throw generateError(ERRORS.NOCRYPTOKEY)
+    throw new MasqError(ERRORS.INVALID_CRYPTOKEY)
   }
 }
 
 /**
- * Generate a PBKDF2 derived key based on user given passPhrase
+ * Generate a PBKDF2 derived key (bits) based on user given passPhrase
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
- * @param {string} [hash] The hash function used for derivation
+ * @param {string} [hashAlgo] The hash function used for derivation
  * @returns {Promise<Uint8Array>}   A promise that contains the derived key
  */
-const deriveBits = async (passPhrase, salt, iterations, hash) => {
+const deriveBits = async (passPhrase, salt, iterations, hashAlgo) => {
   // Always specify a strong salt
   if (iterations < 10000) { console.warn('The iteration number is less than 10000, increase it !') }
 
@@ -65,7 +87,7 @@ const deriveBits = async (passPhrase, salt, iterations, hash) => {
     name: 'PBKDF2',
     salt: salt || new Uint8Array([]),
     iterations: iterations || 100000,
-    hash: hash || 'SHA-256'
+    hash: hashAlgo || 'SHA-256'
   }, baseKey, 128)
 
   return new Uint8Array(derivedKey)
@@ -94,49 +116,71 @@ const hash256 = async (msg, type = 'SHA-256') => {
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @returns {Promise<HashedPassphrase>}   A promise that contains the derived key
  */
-const derivePassphrase = async (passPhrase, salt) => {
+const deriveKeyFromPassphrase = async (passPhrase, salt, iterations, hashAlgo) => {
   _checkPassphrase(passPhrase)
+  const _hashAlgo = hashAlgo || 'SHA-256'
   const _salt = salt || genRandomBuffer(16)
-  const iterations = 100000
-  const hashedValue = await deriveBitsAndHash(passPhrase, _salt, iterations)
+  const _iterations = iterations || 100000
+
+  const derivedKey = await deriveBits(passPhrase, _salt, _iterations, _hashAlgo)
+  const key = await importKey(derivedKey)
   return {
-    salt: Buffer.from(_salt).toString('hex'),
-    iterations: iterations,
-    hashAlgo: 'SHA-256',
-    storedHash: Buffer.from(hashedValue).toString('hex')
+    derivationParams: {
+      salt: Buffer.from(_salt).toString('hex'),
+      iterations: _iterations,
+      hashAlgo: _hashAlgo
+    },
+    key
   }
 }
 
 /**
- * Derive the passphrase with PBKDF2 and hash the output with the given hash function
+ * Derive the passphrase with PBKDF2
+ * Generate a AES key (masterKey)
+ * Encrypt the masterKey
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
- * @param {string} [hash] The hash function used for derivation and final hash computing
+ * @param {string} [hashAlgo] The hash function used for derivation and final hash computing
  * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
  */
-const deriveBitsAndHash = async (passPhrase, salt, iterations, hash) => {
-  const derivedPassphrase = await deriveBits(passPhrase, salt, iterations, hash)
-  const finalHash = await hash256(derivedPassphrase)
-  return finalHash
-}
+const genEncryptedMasterKey = async (passPhrase, salt, iterations, hashAlgo) => {
+  // derive key encryption key from passphrase
+  const keyEncryptionKey = await deriveKeyFromPassphrase(passPhrase, salt, iterations, hashAlgo)
 
-const requiredParameterHashedPassphrase = ['salt', 'iterations', 'storedHash', 'hashAlgo']
+  // Generate the masterKey
+  const masterKey = await genRandomBuffer(16)
+  const encryptedMasterKey = await encrypt(keyEncryptionKey.key, Buffer.from(masterKey).toString('hex'))
+  return {
+    derivationParams: keyEncryptionKey.derivationParams,
+    encryptedMasterKey
+  }
+}
+const requiredParameterProtectedMasterKey = ['encryptedMasterKey', 'derivationParams']
 
 /**
- * Check a given passphrase by comparing it to the stored hash value (in HashedPassphrase object)
+ * Derive a given key by deriving
+ * the encryption key from a
+ * given passphrase and derivation params.
  *
- * @param {string} passphrase The passphrase
- * @param {HashedPassphrase} hashedPassphrase The HashedPassphrase object
- * @returns {Promise<Boolean>}   A promise
+ * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
+ * @param {protectedMasterKey} protectedMasterKey - The same object returned by genEncryptedMasterKey
+ * @returns {Promise<Uint8Array>}   A promise that contains the masterKey
  */
-const checkPassphrase = async (passPhrase, hashedPassphrase) => {
-  _checkPassphrase(passPhrase)
-  checkObject(hashedPassphrase, requiredParameterHashedPassphrase)
-  const { salt, iterations, storedHash, hashAlgo } = hashedPassphrase
-  const hashCandidate = await deriveBitsAndHash(passPhrase, Buffer.from(salt, 'hex'), iterations, hashAlgo)
-  return Buffer.from(hashCandidate).toString('hex') === storedHash
+const decryptMasterKey = async (passPhrase, protectedMasterKey) => {
+  checkObject(protectedMasterKey, requiredParameterProtectedMasterKey)
+  const { derivationParams, encryptedMasterKey } = protectedMasterKey
+  const { salt, iterations, hashAlgo } = derivationParams
+  const _salt = typeof (salt) === 'string' ? Buffer.from(salt, ('hex')) : salt
+  try {
+    const derivedKey = await deriveBits(passPhrase, _salt, iterations, hashAlgo)
+    const keyEncryptionKey = await importKey(derivedKey)
+    const masterKeyHex = await decrypt(keyEncryptionKey, encryptedMasterKey)
+    return Buffer.from(masterKeyHex, 'hex')
+  } catch (error) {
+    throw new MasqError(ERRORS.WRONG_PASSPHRASE)
+  }
 }
 
 /**
@@ -231,7 +275,7 @@ const encryptBuffer = async (key, data, cipherContext) => {
 const encrypt = async (key, data, format = 'hex') => {
   _checkCryptokey(key)
   let context = {
-    iv: genRandomBuffer(16),
+    iv: genRandomBuffer(key.algorithm.name === 'AES-GCM' ? 12 : 16),
     plaintext: Buffer.from(JSON.stringify(data))
   }
 
@@ -240,6 +284,7 @@ const encrypt = async (key, data, format = 'hex') => {
     name: key.algorithm.name,
     iv: context.iv
   }
+
   const encrypted = await encryptBuffer(key, context.plaintext, cipherContext)
   return {
     ciphertext: Buffer.from(encrypted).toString(format),
@@ -256,19 +301,24 @@ const encrypt = async (key, data, format = 'hex') => {
  */
 const decrypt = async (key, ciphertext, format = 'hex') => {
   _checkCryptokey(key)
+
   let context = {
     ciphertext: ciphertext.hasOwnProperty('ciphertext') ? Buffer.from(ciphertext.ciphertext, (format)) : '',
     // IV is 128 bits long === 16 bytes
     iv: ciphertext.hasOwnProperty('iv') ? Buffer.from(ciphertext.iv, (format)) : ''
   }
+
   // Prepare cipher context, depends on cipher mode
   let cipherContext = {
     name: key.algorithm.name,
     iv: context.iv
   }
-
-  const decrypted = await decryptBuffer(key, context.ciphertext, cipherContext)
-  return JSON.parse(Buffer.from(decrypted).toString())
+  try {
+    const decrypted = await decryptBuffer(key, context.ciphertext, cipherContext)
+    return JSON.parse(Buffer.from(decrypted).toString())
+  } catch (error) {
+    throw new MasqError(ERRORS.UNABLE_TO_DECRYPT)
+  }
 }
 
 module.exports = {
@@ -279,6 +329,6 @@ module.exports = {
   genAESKey,
   genRandomBuffer,
   getBuffer,
-  checkPassphrase,
-  derivePassphrase
+  decryptMasterKey,
+  genEncryptedMasterKey
 }
