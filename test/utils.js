@@ -3,11 +3,25 @@
 /* global chai */
 
 describe('MasqCommon utils', () => {
+  // track created databases to be able to delete them after each tests
+  let dbNames = []
+  let originalCreate = MasqCommon.utils.createPromisifiedHyperDB
+  MasqCommon.utils.createPromisifiedHyperDB = (...args) => {
+    dbNames.push(args[0])
+    return originalCreate(...args)
+  }
+
+  afterEach(() => {
+    dbNames.forEach(db => { window.indexedDB.deleteDatabase(db) })
+    dbNames = []
+  })
+
   context('IndexedDB operations', () => {
     it('DB should exist', async () => {
       window.indexedDB.open('test1')
       const exists = await MasqCommon.utils.dbExists('test1')
       chai.assert.equal(exists, true, 'database must exist')
+      window.indexedDB.deleteDatabase('test1')
     })
 
     it('DB should not exist', async () => {
