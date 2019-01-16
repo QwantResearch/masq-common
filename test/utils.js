@@ -106,7 +106,7 @@ describe('MasqCommon utils', () => {
     it('Should reject if an encryption key is not given to list', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
-        const db = await MasqCommon.utils.createPromisifiedHyperDB('dB5')
+        const db = await MasqCommon.utils.createPromisifiedHyperDB('dB6')
         await MasqCommon.utils.list(db)
       } catch (error) {
         err = error
