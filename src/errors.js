@@ -55,10 +55,8 @@ class MasqError extends Error {
    */
 const checkObject = (obj, parameters) => {
   for (let i in parameters) {
-    if (typeof obj[parameters[i]] !== 'boolean') {
-      if (obj[parameters[i]] === undefined) {
-        throw new MasqError(ERRORS.WRONG_PARAMETER, `The parameter ${parameters[i]} is required`)
-      }
+    if (obj[parameters[i]] === undefined) {
+      throw new MasqError(ERRORS.WRONG_PARAMETER, `The parameter ${parameters[i]} is required`)
     }
   }
 }
