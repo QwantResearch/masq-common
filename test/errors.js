@@ -24,12 +24,16 @@ describe('MasqCommon errors', () => {
       const toCall = () => checkObject(myObj, requiredParameters)
       chai.expect(toCall).to.not.throw()
     })
+    it('Should not throw if a property is null', async () => {
+      const myObj = { name: null, age: 18 }
+      const toCall = () => checkObject(myObj, requiredParameters)
+      chai.expect(toCall).to.not.throw()
+    })
     it('Should throw if any property is not set ', async () => {
       const myObj = { age: 18 }
       const toCall = () => checkObject(myObj, requiredParameters)
       chai.expect(toCall).to.throw().with.property('type', WRONG_PARAMETER)
     })
-
     it('Should throw if any property is undefined ', async () => {
       const myObj = { name: undefined, age: 18 }
       const toCall = () => checkObject(myObj, requiredParameters)
