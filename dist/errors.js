@@ -87,10 +87,8 @@ var MasqError = function (_Error) {
 
 var checkObject = function checkObject(obj, parameters) {
   for (var i in parameters) {
-    if (typeof obj[parameters[i]] !== 'boolean') {
-      if (!obj[parameters[i]] || obj[parameters[i]] === '') {
-        throw new MasqError(ERRORS.WRONG_PARAMETER, 'The parameter ' + parameters[i] + ' is required');
-      }
+    if (obj[parameters[i]] === undefined) {
+      throw new MasqError(ERRORS.WRONG_PARAMETER, 'The parameter ' + parameters[i] + ' is required');
     }
   }
 };
