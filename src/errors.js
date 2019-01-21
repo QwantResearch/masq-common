@@ -57,11 +57,7 @@ const checkObject = (obj, parameters) => {
   for (let i in parameters) {
     if (typeof obj[parameters[i]] !== 'boolean') {
       if (!obj[parameters[i]] || obj[parameters[i]] === '') {
-        const error = {
-          message: `The parameter ${parameters[i]} is required`,
-          name: ERRORS.WRONG_PARAMETER
-        }
-        throw error
+        throw new MasqError(ERRORS.WRONG_PARAMETER, `The parameter ${parameters[i]} is required`)
       }
     }
   }

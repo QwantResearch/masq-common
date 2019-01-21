@@ -79,9 +79,9 @@ describe('MasqCommon crypto', function () {
       try {
         await MasqCommon.crypto.decryptMasterKey('secretPassphraseCandidate', {})
       } catch (error) {
-        err = error.name
+        err = error
       }
-      chai.assert.equal(err, MasqCommon.errors.ERRORS.WRONG_PARAMETER, 'A requried property is missing')
+      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.WRONG_PARAMETER, 'A requried property is missing')
     })
 
     it('The salt and protectedMK must be different for two consecutive call to genEncryptedMasterKey even with the same passphrase', async () => {
