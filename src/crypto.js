@@ -321,7 +321,7 @@ const decrypt = async (key, ciphertext, format = 'hex') => {
   }
 }
 
-module.exports = {
+export {
   encrypt,
   decrypt,
   importKey,
