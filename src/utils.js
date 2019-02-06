@@ -1,14 +1,23 @@
 import { encrypt, decrypt } from './crypto'
 import { ERRORS, MasqError } from './errors'
-const promisifyAll = require('bluebird').promisifyAll
+import { promisify } from 'es6-promisify'
 const hyperdb = require('hyperdb')
 const rai = require('random-access-idb')
 
 function createPromisifiedHyperDB (name, hexKey) {
+  const methodsToPromisify = ['version', 'put', 'get', 'del', 'batch', 'list', 'authorize', 'authorized']
   const keyBuffer = hexKey
     ? Buffer.from(hexKey, 'hex')
     : null
-  return promisifyAll(hyperdb(rai(name), keyBuffer, { valueEncoding: 'json', firstNode: true }))
+
+  const db = hyperdb(rai(name), keyBuffer, { valueEncoding: 'json', firstNode: true })
+
+  // Promisify methods with Async suffix
+  methodsToPromisify.forEach(m => {
+    db[`${m}Async`] = promisify(db[m])
+  })
+
+  return db
 }
 
 function dbReady (db) {
