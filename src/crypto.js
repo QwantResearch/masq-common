@@ -100,6 +100,7 @@ const deriveBits = async (passPhrase, salt, iterations, hashAlgo) => {
  * @param {string} [type] The hash name (SHA-256 by default)
  * @returns {Promise<Uint8Array>}   A promise that contains the hash as a Uint8Array
  */
+// eslint-disable-next-line no-unused-vars
 const hash256 = async (msg, type = 'SHA-256') => {
   const digest = await window.crypto.subtle.digest(
     {
