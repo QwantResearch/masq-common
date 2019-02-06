@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "Common functions for Masq",
   "main": "dist/masq-common.js",
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "webpack -p",
     "test": "eslint . && npm run build && mocha-headless-chrome -f ./test/index.html -a no-sandbox -a disable-setuid-sandbox",
@@ -39,18 +36,18 @@
     "webpack-bundle-analyzer": "^3.0.3",
     "webpack-cli": "^3.2.1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/QwantResearch/masq-common.git"
-  },
   "keywords": [
     "encryption",
     "common",
     "utils"
   ],
-  "author": "Levent DEMIR",
+  "author": "Qwant Research",
+  "homepage": "https://github.com/QwantResearch/masq-common#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QwantResearch/masq-common.git"
+  },
   "bugs": {
     "url": "https://github.com/QwantResearch/masq-common/issues"
-  },
-  "homepage": "https://github.com/QwantResearch/masq-common#readme"
+  }
 }
