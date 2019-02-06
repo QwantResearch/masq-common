@@ -61,6 +61,4 @@ const checkObject = (obj, parameters) => {
   }
 }
 
-module.exports.checkObject = checkObject
-module.exports.ERRORS = ERRORS
-module.exports.MasqError = MasqError
+export { checkObject, ERRORS, MasqError }

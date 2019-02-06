@@ -112,7 +112,7 @@ const list = async (db, encKey, prefix) => {
   return reformattedDic
 }
 
-module.exports = {
+export {
   dbReady,
   dbExists,
   createPromisifiedHyperDB,
