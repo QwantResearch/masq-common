@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Common functions for Masq",
   "main": "dist/masq-common.js",
+  "module": "src/index.js",
   "scripts": {
     "build": "webpack -p",
     "test": "eslint . && npm run build && mocha-headless-chrome -f ./test/index.html -a no-sandbox -a disable-setuid-sandbox",
