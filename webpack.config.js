@@ -2,6 +2,7 @@ var path = require('path')
 
 module.exports = {
   entry: './src/index.js',
+  target: 'web',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'masq-common.js',
