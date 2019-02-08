@@ -5,6 +5,7 @@
   "main": "dist/masq-common.js",
   "module": "src/index.js",
   "scripts": {
+    "install": "npm run build",
     "build": "webpack -p",
     "test": "eslint . && npm run build && mocha-headless-chrome -f ./test/index.html -a no-sandbox -a disable-setuid-sandbox",
     "stats": "webpack --profile --json > stats.json",
