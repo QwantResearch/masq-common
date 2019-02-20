@@ -98,17 +98,18 @@ const deriveBits = async (passPhrase, salt, iterations, hashAlgo) => {
  *
  * @param {string | arrayBuffer} msg The message
  * @param {string} [type] The hash name (SHA-256 by default)
+ * @param {string} [encodingFormat] The encoding format ('hex' by default, could be 'base64')
  * @returns {Promise<Uint8Array>}   A promise that contains the hash as a Uint8Array
  */
 // eslint-disable-next-line no-unused-vars
-const hash256 = async (msg, type = 'SHA-256') => {
+const hash256 = async (msg, encodingFormat = 'hex', type = 'SHA-256') => {
   const digest = await window.crypto.subtle.digest(
     {
       name: 'SHA-256'
     },
     (typeof msg === 'string') ? Buffer.from(msg) : msg
   )
-  return new Uint8Array(digest)
+  return Buffer.from(digest).toString(encodingFormat)
 }
 
 /**
@@ -226,7 +227,6 @@ const importKey = (key, type = 'raw', mode = 'AES-GCM') => {
 
 /**
  * Decrypt buffer
- *
  * @param {ArrayBuffer} key - The AES CryptoKey
  * @param {ArrayBuffer} data - Data to decrypt
  * @param {Object} cipherContext - The AES cipher parameters
@@ -331,5 +331,6 @@ export {
   genRandomBuffer,
   getBuffer,
   decryptMasterKey,
-  genEncryptedMasterKey
+  genEncryptedMasterKey,
+  hash256
 }
