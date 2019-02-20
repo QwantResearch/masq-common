@@ -44,23 +44,6 @@ function dbExists (dbName) {
   })
 }
 
-function getHashParams (link) {
-  const url = new URL(link)
-  const hash = url.hash.slice(7)
-  const hashParamsArr = JSON.parse(Buffer.from(hash, 'base64').toString('utf8'))
-  if (!Array.isArray(hashParamsArr) || hashParamsArr.length !== 4) {
-    throw new Error('Wrong login URL')
-  }
-  const hashParamsObj = {
-    appName: hashParamsArr[0],
-    requestType: hashParamsArr[1],
-    channel: hashParamsArr[2],
-    key: hashParamsArr[3]
-  }
-  hashParamsObj.key = Buffer.from(hashParamsObj.key, 'base64')
-  return hashParamsObj
-}
-
 /**
    * Get a value
    * @param {Object} db - The hyperDB instance
@@ -125,7 +108,6 @@ export {
   dbReady,
   dbExists,
   createPromisifiedHyperDB,
-  getHashParams,
   get,
   put,
   list
