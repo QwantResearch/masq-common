@@ -1,4 +1,4 @@
-import { encrypt, decrypt } from './crypto'
+import { encrypt, decrypt, hash256 } from './crypto'
 import { ERRORS, MasqError } from './errors'
 import { promisify } from 'es6-promisify'
 const hyperdb = require('hyperdb')
@@ -45,19 +45,37 @@ function dbExists (dbName) {
 }
 
 /**
+ *
+ * @param {string} key - The key (/prefix/key)
+ * @param {string} nonce - The nonce is used to ensure privacy and avoid de-anonymization (hex string)
+ */
+const hashKey = async (key, nonce) => {
+  const prefixes = key.split('/').filter(prefix => prefix !== '')
+  // console.log(prefixes)
+  const hashedPrefixes = await Promise.all(prefixes.map(async (prefix) => hash256(`${nonce}${prefix}`)))
+  // console.log(hashedPrefixes)
+  return hashedPrefixes.join('/')
+}
+
+/**
    * Get a value
    * @param {Object} db - The hyperDB instance
    * @param {CryptoKey} enckey - The enc/dec AES key
    * @param {string} key - The key name
+   * @param {string} nonce - The nonce as hex string
    * @returns {Promise}
    */
-const get = async (db, encKey, key) => {
+const get = async (db, encKey, key, nonce) => {
   if (!db) throw new MasqError(ERRORS.NO_DB)
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
-  const node = await db.getAsync(key)
+  const hashedKey = await hashKey(key, nonce)
+  // console.log('get', key, hashedKey)
+
+  const node = await db.getAsync(hashedKey)
   if (!node) return null
   const dec = await decrypt(encKey, node.value)
-  return dec
+  // dec contains an object with key and value
+  return dec.value
 }
 
 /**
@@ -66,13 +84,21 @@ const get = async (db, encKey, key) => {
    * @param {CryptoKey} enckey - The enc/dec AES key
    * @param {string} key - The key name
    * @param {any} value - The value to insert
+   * @param {string} nonce - The nonce as hex string
    * @returns {Promise}
    */
-const put = async (db, encKey, key, value) => {
+const put = async (db, encKey, key, value, nonce) => {
   if (!db) throw new MasqError(ERRORS.NO_DB)
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
-  const enc = await encrypt(encKey, value)
-  return db.putAsync(key, enc)
+  const withKeyName = {
+    key: key,
+    value: value
+  }
+  const enc = await encrypt(encKey, withKeyName)
+  const hashedKey = await hashKey(key, nonce)
+  // console.log('put', key, hashedKey)
+
+  return db.putAsync(hashedKey, enc)
 }
 
 /**
@@ -86,21 +112,24 @@ const list = async (db, encKey, prefix) => {
   if (!db) throw new MasqError(ERRORS.NO_DB)
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
 
-  const list = await db.listAsync(prefix)
+  const _prefix = prefix ? hashKey(prefix) : '/'
+  const list = await db.listAsync(_prefix)
   if (list.length === 1 && list[0].key === '' && list[0].value === null) {
     return {}
   }
-
-  const decList = await Promise.all(list.map(async (elt) => ({
-    key: elt.key,
-    value: await decrypt(encKey, elt.value)
-  })))
+  const decList = await Promise.all(list.map(async (elt) => {
+    const dec = await decrypt(encKey, elt.value)
+    return {
+      key: dec.key,
+      value: dec.value
+    }
+  }))
 
   const reformattedDic = decList.reduce((dic, e) => {
-    const el = Array.isArray(e) ? e[0] : e
-    dic[el.key] = el.value
+    dic[e.key] = e.value
     return dic
   }, {})
+
   return reformattedDic
 }
 
@@ -110,5 +139,6 @@ export {
   createPromisifiedHyperDB,
   get,
   put,
-  list
+  list,
+  hashKey
 }
