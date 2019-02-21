@@ -161,14 +161,19 @@ const genEncryptedMasterKey = async (passPhrase, salt, iterations, hashAlgo) => 
   // Generate the masterKey
   const masterKey = await genRandomBuffer(16, 'hex')
   const nonce = await genRandomBuffer(16, 'hex')
-  const encryptedMasterKey = await encrypt(keyEncryptionKey.key, masterKey)
-  return {
-    derivationParams: keyEncryptionKey.derivationParams,
-    encryptedMasterKey,
+  const toBeEncrypted = {
+    masterKey,
     nonce
   }
+
+  const encryptedMasterKeyAndNonce = await encrypt(keyEncryptionKey.key, toBeEncrypted)
+
+  return {
+    derivationParams: keyEncryptionKey.derivationParams,
+    encryptedMasterKeyAndNonce
+  }
 }
-const requiredParameterProtectedMasterKey = ['encryptedMasterKey', 'derivationParams']
+const requiredParameterProtectedMasterKey = ['encryptedMasterKeyAndNonce', 'derivationParams']
 
 /**
  * Derive a given key by deriving
@@ -181,14 +186,18 @@ const requiredParameterProtectedMasterKey = ['encryptedMasterKey', 'derivationPa
  */
 const decryptMasterKey = async (passPhrase, protectedMasterKey) => {
   checkObject(protectedMasterKey, requiredParameterProtectedMasterKey)
-  const { derivationParams, encryptedMasterKey } = protectedMasterKey
+  const { derivationParams, encryptedMasterKeyAndNonce } = protectedMasterKey
   const { salt, iterations, hashAlgo } = derivationParams
   const _salt = typeof (salt) === 'string' ? Buffer.from(salt, ('hex')) : salt
   try {
     const derivedKey = await deriveBits(passPhrase, _salt, iterations, hashAlgo)
     const keyEncryptionKey = await importKey(derivedKey)
-    const masterKeyHex = await decrypt(keyEncryptionKey, encryptedMasterKey)
-    return Buffer.from(masterKeyHex, 'hex')
+    const encryptedMasterKeyAndNonceHex = await decrypt(keyEncryptionKey, encryptedMasterKeyAndNonce)
+    return {
+      masterKey: Buffer.from(encryptedMasterKeyAndNonceHex.masterKey, 'hex'),
+      nonce: encryptedMasterKeyAndNonceHex.nonce
+
+    }
   } catch (error) {
     throw new MasqError(ERRORS.WRONG_PASSPHRASE)
   }

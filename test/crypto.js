@@ -32,13 +32,13 @@ describe('MasqCommon crypto', function () {
 
     it('Should derive a passphrase [string] with default settings, gen MK and encrypt it ', async () => {
       const protectedMasterKey = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
-      const { derivationParams, encryptedMasterKey } = protectedMasterKey
+      const { derivationParams, encryptedMasterKeyAndNonce } = protectedMasterKey
       const { salt, iterations, hashAlgo } = derivationParams
       chai.assert.equal(hashAlgo, 'SHA-256', 'Default hash algo is SHA-256')
       chai.assert.equal(iterations, 100000, 'Default iteration is 100000')
       chai.assert.lengthOf(salt, 32, 'Default salt is 128 bits array, 32 bytes as hex string')
-      chai.assert.exists(encryptedMasterKey.iv)
-      chai.assert.exists(encryptedMasterKey.ciphertext)
+      chai.assert.exists(encryptedMasterKeyAndNonce.iv)
+      chai.assert.exists(encryptedMasterKeyAndNonce.ciphertext)
     })
 
     it('Should reject if passphrase is not a string or is empty', async () => {
@@ -51,25 +51,27 @@ describe('MasqCommon crypto', function () {
       chai.assert.equal(err.type, MasqCommon.errors.ERRORS.INVALID_PASSPHRASE, 'Reject if passphrase is not a string')
     })
 
-    it('Should return the MK (an Array) if the given passphrase is the same as the stored one', async () => {
+    it('Should return the MK (an Array) and a nonce if the given passphrase is the same as the stored one', async () => {
       const protectedMK = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
-      const MK = await MasqCommon.crypto.decryptMasterKey(passphrase, protectedMK)
-      chai.assert.exists(MK, 'The check operation should return the MK')
-      chai.assert.lengthOf(MK, 16, 'Default AES key is 128 bits long ')
+      const MKAndNonce = await MasqCommon.crypto.decryptMasterKey(passphrase, protectedMK)
+      chai.assert.exists(MKAndNonce.masterKey, 'The check operation should return the MK')
+      chai.assert.lengthOf(MKAndNonce.masterKey, 16, 'Default AES key is 128 bits long ')
+      chai.assert.exists(MKAndNonce.nonce)
+      chai.assert.lengthOf(MKAndNonce.nonce, 32)
     })
 
     it('Should derive a key from passphrase, gen MK, enc/dec a value', async () => {
       const protectedMK = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
-      const MK = await MasqCommon.crypto.decryptMasterKey(passphrase, protectedMK)
-      const cryptokey = await MasqCommon.crypto.importKey(MK)
+      const MKAndNonce = await MasqCommon.crypto.decryptMasterKey(passphrase, protectedMK)
+      const cryptokey = await MasqCommon.crypto.importKey(MKAndNonce.masterKey)
       const data = { 'hello': 'world' }
       const enc = await MasqCommon.crypto.encrypt(cryptokey, data)
       chai.assert.exists(enc.iv, 'iv must exist')
       chai.assert.exists(enc.ciphertext, 'ciphertext must exist')
 
       // Just to be sure that everything is working well.
-      const sameMK = await MasqCommon.crypto.decryptMasterKey(passphrase, protectedMK)
-      const sameCryptokey = await MasqCommon.crypto.importKey(sameMK)
+      const sameMKAndNonce = await MasqCommon.crypto.decryptMasterKey(passphrase, protectedMK)
+      const sameCryptokey = await MasqCommon.crypto.importKey(sameMKAndNonce.masterKey)
       const dec = await MasqCommon.crypto.decrypt(sameCryptokey, enc)
       chai.assert.deepEqual(dec, data, 'Must be the same')
     })
@@ -101,8 +103,8 @@ describe('MasqCommon crypto', function () {
       const protectedMK1 = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
       const protectedMK2 = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
       chai.assert.notStrictEqual(protectedMK1.derivationParams.salt, protectedMK2.derivationParams.salt, 'Two different salt')
-      chai.assert.notStrictEqual(protectedMK1.encryptedMasterKey.iv, protectedMK2.encryptedMasterKey.iv, 'Two different iv')
-      chai.assert.notStrictEqual(protectedMK1.encryptedMasterKey.ciphertext, protectedMK2.encryptedMasterKey.ciphertext, 'Two different ciphertext')
+      chai.assert.notStrictEqual(protectedMK1.encryptedMasterKeyAndNonce.iv, protectedMK2.encryptedMasterKeyAndNonce.iv, 'Two different iv')
+      chai.assert.notStrictEqual(protectedMK1.encryptedMasterKeyAndNonce.ciphertext, protectedMK2.encryptedMasterKeyAndNonce.ciphertext, 'Two different ciphertext')
     })
 
     it('Should generate the same derived key if the salt is a UInt8Array or Buffer.from(UInt8array)', async () => {
