@@ -53,11 +53,12 @@ describe('MasqCommon crypto', function () {
 
     it('Should return the MK (an Array) and a nonce if the given passphrase is the same as the stored one', async () => {
       const protectedMK = await MasqCommon.crypto.genEncryptedMasterKey(passphrase)
-      const MKAndNonce = await MasqCommon.crypto.decryptMasterKey(passphrase, protectedMK)
-      chai.assert.exists(MKAndNonce.masterKey, 'The check operation should return the MK')
-      chai.assert.lengthOf(MKAndNonce.masterKey, 16, 'Default AES key is 128 bits long ')
-      chai.assert.exists(MKAndNonce.nonce)
-      chai.assert.lengthOf(MKAndNonce.nonce, 32)
+      const { masterKey, nonce } = await MasqCommon.crypto.decryptMasterKey(passphrase, protectedMK)
+
+      chai.assert.exists(masterKey, 'The check operation should return the MK')
+      chai.assert.lengthOf(masterKey, 16, 'Default AES key is 128 bits long ')
+      chai.assert.exists(nonce)
+      chai.assert.lengthOf(nonce, 32)
     })
 
     it('Should derive a key from passphrase, gen MK, enc/dec a value', async () => {
