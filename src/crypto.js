@@ -1,8 +1,15 @@
 import { ERRORS, checkObject, MasqError } from './errors'
 
-const genRandomBuffer = (len = 16) => {
+const _checkEncodingFormat = (format) => {
+  if (format !== 'hex' && format !== 'base64') throw new MasqError(ERRORS.INVALID_ENCODING_FORMAT)
+}
+
+const genRandomBuffer = (len = 16, encodingFormat) => {
+  if (encodingFormat) {
+    _checkEncodingFormat(encodingFormat)
+  }
   const values = window.crypto.getRandomValues(new Uint8Array(len))
-  return Buffer.from(values)
+  return encodingFormat ? Buffer.from(values).toString(encodingFormat) : Buffer.from(values)
 }
 
 /**
