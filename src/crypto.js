@@ -160,10 +160,12 @@ const genEncryptedMasterKey = async (passPhrase, salt, iterations, hashAlgo) => 
 
   // Generate the masterKey
   const masterKey = await genRandomBuffer(16, 'hex')
+  const nonce = await genRandomBuffer(16, 'hex')
   const encryptedMasterKey = await encrypt(keyEncryptionKey.key, masterKey)
   return {
     derivationParams: keyEncryptionKey.derivationParams,
-    encryptedMasterKey
+    encryptedMasterKey,
+    nonce
   }
 }
 const requiredParameterProtectedMasterKey = ['encryptedMasterKey', 'derivationParams']
