@@ -1,6 +1,7 @@
 const ERRORS = {
   UNDEFINED_ERROR: 'Error with undefined type',
   WRONG_PARAMETER: 'The given object has wrong properties',
+  WRONG_FUNCTION_ARGUMENTS: 'Wrong function arguments',
   NOT_LOGGED_IN: 'Not logged into Masq',
   NOT_CONNECTED: 'Not connected to Masq',
   UNABLE_TO_DECRYPT: 'Unable to decrypt data',
