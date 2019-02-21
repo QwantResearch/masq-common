@@ -159,8 +159,8 @@ const genEncryptedMasterKey = async (passPhrase, salt, iterations, hashAlgo) => 
   const keyEncryptionKey = await deriveKeyFromPassphrase(passPhrase, salt, iterations, hashAlgo)
 
   // Generate the masterKey
-  const masterKey = await genRandomBuffer(16)
-  const encryptedMasterKey = await encrypt(keyEncryptionKey.key, Buffer.from(masterKey).toString('hex'))
+  const masterKey = await genRandomBuffer(16, 'hex')
+  const encryptedMasterKey = await encrypt(keyEncryptionKey.key, masterKey)
   return {
     derivationParams: keyEncryptionKey.derivationParams,
     encryptedMasterKey
