@@ -1,4 +1,5 @@
 const ERRORS = {
+  INVALID_ENCODING_FORMAT: 'Supporting encoding format: hex and base64',
   UNDEFINED_ERROR: 'Error with undefined type',
   WRONG_PARAMETER: 'The given object has wrong properties',
   NOT_LOGGED_IN: 'Not logged into Masq',
