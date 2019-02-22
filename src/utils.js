@@ -90,8 +90,19 @@ const get = async (db, encKey, key, nonce) => {
 const put = async (db, encKey, key, value, nonce) => {
   if (!db) throw new MasqError(ERRORS.NO_DB)
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
+
+  let sanitizedKey = key
+
+  if (sanitizedKey[0] === '/') {
+    sanitizedKey = sanitizedKey.slice(1)
+  }
+
+  if (sanitizedKey[sanitizedKey.length - 1] === '/') {
+    sanitizedKey = sanitizedKey.slice(0, -1)
+  }
+
   const withKeyName = {
-    key: key,
+    key: sanitizedKey,
     value: value
   }
   const enc = await encrypt(encKey, withKeyName)
