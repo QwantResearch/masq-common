@@ -50,10 +50,9 @@ function dbExists (dbName) {
  * @param {string} nonce - The nonce is used to ensure privacy and avoid de-anonymization (hex string)
  */
 const hashKey = async (key, nonce) => {
+  if (key === '/' || key === '') return '/'
   const prefixes = key.split('/').filter(prefix => prefix !== '')
-  // console.log(prefixes)
   const hashedPrefixes = await Promise.all(prefixes.map(async (prefix) => hash256(`${nonce}${prefix}`)))
-  // console.log(hashedPrefixes)
   return hashedPrefixes.join('/')
 }
 
@@ -65,11 +64,11 @@ const hashKey = async (key, nonce) => {
    * @param {string} nonce - The nonce as hex string
    * @returns {Promise}
    */
-const get = async (db, encKey, key, nonce) => {
+const get = async (db, encKey, nonce, key) => {
   if (!db) throw new MasqError(ERRORS.NO_DB)
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
+  if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
   const hashedKey = await hashKey(key, nonce)
-  // console.log('get', key, hashedKey)
 
   const node = await db.getAsync(hashedKey)
   if (!node) return null
@@ -82,14 +81,15 @@ const get = async (db, encKey, key, nonce) => {
    * Put a new value in the db
    * @param {Object} db - The hyperDB instance
    * @param {CryptoKey} enckey - The enc/dec AES key
+   * @param {string} nonce - The nonce as hex string
    * @param {string} key - The key name
    * @param {any} value - The value to insert
-   * @param {string} nonce - The nonce as hex string
    * @returns {Promise}
    */
-const put = async (db, encKey, key, value, nonce) => {
+const put = async (db, encKey, nonce, key, value) => {
   if (!db) throw new MasqError(ERRORS.NO_DB)
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
+  if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
 
   let sanitizedKey = key
 
@@ -116,14 +116,16 @@ const put = async (db, encKey, key, value, nonce) => {
    * List all keys and values
    * @param {Object} db - The hyperDB instance
    * @param {CryptoKey} enckey - The enc/dec AES key
-   * @param {string} prefix - Prefix
+   * @param {string} nonce - The nonce as hex string
+   * @param {string} [prefix] - Prefix
    * @returns {Promise}
    */
-const list = async (db, encKey, prefix) => {
+const list = async (db, encKey, nonce, prefix) => {
   if (!db) throw new MasqError(ERRORS.NO_DB)
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
+  if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
 
-  const _prefix = prefix ? hashKey(prefix) : '/'
+  const _prefix = prefix ? hashKey(prefix, nonce) : '/'
   const list = await db.listAsync(_prefix)
   if (list.length === 1 && list[0].key === '' && list[0].value === null) {
     return {}
