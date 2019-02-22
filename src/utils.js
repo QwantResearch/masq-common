@@ -146,7 +146,21 @@ const list = async (db, encKey, nonce, prefix) => {
   return reformattedDic
 }
 
+/**
+   * Set a watcher
+   * @param {Object} db - The hyperDB instance
+   * @param {string} nonce - The nonce as hex string
+   * @param {string} key - Key
+   * @param {Object} cb
+   * @returns {Object}
+   */
+const watch = async (db, nonce, key, cb) => {
+  const hashedKey = await hashKey(key, nonce)
+  return db.watch(hashedKey, cb)
+}
+
 export {
+  watch,
   dbReady,
   dbExists,
   createPromisifiedHyperDB,
