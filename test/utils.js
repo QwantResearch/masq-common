@@ -2,7 +2,7 @@
 /* global MasqCommon */
 /* global chai */
 
-describe('MasqCommon utils', () => {
+describe('MasqCommon MasqCommon.utils', () => {
   // track created databases to be able to delete them after each tests
   let dbNames = []
   const nonce = '7692c3ad3540bb803c020b3aee66'
@@ -32,8 +32,8 @@ describe('MasqCommon utils', () => {
 
     it('Should hash each subpaths of a given key', async () => {
       const key = '/favoris/paris'
-      const prefixes = await MasqCommon.utils.hashKey(key)
-      const expected = '55b29c9511f2460c96cb2e17695be711f5fc2052f560aa6dbe06d274de682701/24ecca2efd35a52dbb7705852e23e4b0760897c454eb620bbe66b6a5e8116297'
+      const prefixes = await MasqCommon.utils.hashKey(key, nonce)
+      const expected = 'ab595ffb49ed89da9e15a501d65f2fe0d0c47ef41ff346c2cd31246dd5c54003/e13e07a3ac6a83421551448b2ba94205a0fdaca27d622addc8bab44300f28290'
       chai.assert.deepEqual(prefixes, expected)
     })
 
@@ -49,12 +49,11 @@ describe('MasqCommon utils', () => {
       const masterKey = await MasqCommon.crypto.genAESKey()
       const item = { one: '1' }
       const keyName = 'one'
-      // needed to check if encryption is ok
-      // const hashedKeyName = '7692c3ad3540bb803c020b3aee66cd8887123234ea0c6e7143c0add73ff431ed'
+      // need to check if encryption is ok
       const db = await MasqCommon.utils.createPromisifiedHyperDB('dB2')
       await MasqCommon.utils.dbReady(db)
-      await MasqCommon.utils.put(db, masterKey, keyName, item, nonce)
-      const dec = await MasqCommon.utils.get(db, masterKey, keyName, nonce)
+      await MasqCommon.utils.put(db, masterKey, nonce, keyName, item)
+      const dec = await MasqCommon.utils.get(db, masterKey, nonce, keyName)
       chai.assert.deepEqual(dec, item)
       // check stored value, must contains iv and ciphertext properties
       const hashedKeyName = await MasqCommon.utils.hashKey(keyName, nonce)
@@ -70,18 +69,18 @@ describe('MasqCommon utils', () => {
       const item2 = { two: '2' }
       const db = await MasqCommon.utils.createPromisifiedHyperDB('dB3')
       await MasqCommon.utils.dbReady(db)
-      const emptyList = await MasqCommon.utils.list(db, masterKey)
+      const emptyList = await MasqCommon.utils.list(db, masterKey, nonce)
       chai.assert.lengthOf(Object.keys(emptyList), 0)
 
-      const emptyListWithPrefix = await MasqCommon.utils.list(db, masterKey, prefix)
+      const emptyListWithPrefix = await MasqCommon.utils.list(db, masterKey, nonce, prefix)
       chai.assert.lengthOf(Object.keys(emptyListWithPrefix), 0)
 
-      await MasqCommon.utils.put(db, masterKey, `${prefix}one`, item, nonce)
-      await MasqCommon.utils.put(db, masterKey, `${prefix}two`, item2, nonce)
-      const list = await MasqCommon.utils.list(db, masterKey)
+      await MasqCommon.utils.put(db, masterKey, nonce, `${prefix}one`, item)
+      await MasqCommon.utils.put(db, masterKey, nonce, `${prefix}two`, item2)
+      const list = await MasqCommon.utils.list(db, masterKey, nonce)
 
       chai.assert.lengthOf(Object.keys(list), 2)
-      const listWithPrefix = await MasqCommon.utils.list(db, masterKey, prefix)
+      const listWithPrefix = await MasqCommon.utils.list(db, masterKey, nonce, prefix)
       chai.assert.lengthOf(Object.keys(listWithPrefix), 2)
     })
 
@@ -93,14 +92,27 @@ describe('MasqCommon utils', () => {
       const item = { one: '1' }
       const db = await MasqCommon.utils.createPromisifiedHyperDB('dB9')
       await MasqCommon.utils.dbReady(db)
-
-      await MasqCommon.utils.put(db, masterKey, `${prefix1}one`, item)
-      const list1 = await MasqCommon.utils.list(db, masterKey, prefix1)
+      await MasqCommon.utils.put(db, masterKey, nonce, `${prefix1}one`, item)
+      const list1 = await MasqCommon.utils.list(db, masterKey, nonce, prefix1)
       chai.assert.lengthOf(Object.keys(list1), 1)
-      const list2 = await MasqCommon.utils.list(db, masterKey, prefix2)
+      const list2 = await MasqCommon.utils.list(db, masterKey, nonce, prefix2)
       chai.assert.lengthOf(Object.keys(list2), 1)
-      const list3 = await MasqCommon.utils.list(db, masterKey, prefix3)
+      const list3 = await MasqCommon.utils.list(db, masterKey, nonce, prefix3)
       chai.assert.lengthOf(Object.keys(list3), 1)
+    })
+
+    it('Should list (export) keys/values, the keys first and last / if exists must be removed', async () => {
+      const masterKey = await MasqCommon.crypto.genAESKey()
+      const prefix = ('/players/')
+      const player1 = { name: 'bob' }
+      const player2 = { name: 'tom' }
+      const db = await MasqCommon.utils.createPromisifiedHyperDB('dB10')
+      await MasqCommon.utils.dbReady(db)
+      await MasqCommon.utils.put(db, masterKey, nonce, `${prefix}1`, player1)
+      await MasqCommon.utils.put(db, masterKey, nonce, `${prefix}2`, player2)
+      const list = await MasqCommon.utils.list(db, masterKey, nonce, prefix)
+      const expected = { 'players/2': { name: 'tom' }, 'players/1': { name: 'bob' } }
+      chai.assert.deepEqual(list, expected)
     })
 
     it('Should reject if a db is not given to put', async () => {
@@ -122,6 +134,16 @@ describe('MasqCommon utils', () => {
       }
       chai.assert.equal(err.type, MasqCommon.errors.ERRORS.NO_ENCRYPTION_KEY, 'Reject if no encryption key  is given')
     })
+    it('Should reject if an nonce is not given to put', async () => {
+      let err = { type: '_ERROR_NOT_THROWN_' }
+      try {
+        const db = await MasqCommon.utils.createPromisifiedHyperDB('dB5')
+        await MasqCommon.utils.put(db, 'secretKey')
+      } catch (error) {
+        err = error
+      }
+      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.NO_NONCE, 'Reject if no nonce key  is given')
+    })
     it('Should reject if a db is not given to get/ or is not an hyperDB instance', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
@@ -134,12 +156,22 @@ describe('MasqCommon utils', () => {
     it('Should reject if an encryption key is not given to get', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
-        const db = await MasqCommon.utils.createPromisifiedHyperDB('dB5')
+        const db = await MasqCommon.utils.createPromisifiedHyperDB('dB6')
         await MasqCommon.utils.get(db)
       } catch (error) {
         err = error
       }
       chai.assert.equal(err.type, MasqCommon.errors.ERRORS.NO_ENCRYPTION_KEY, 'Reject if no encryption key  is given')
+    })
+    it('Should reject if a nonce is not given to get', async () => {
+      let err = { type: '_ERROR_NOT_THROWN_' }
+      try {
+        const db = await MasqCommon.utils.createPromisifiedHyperDB('dB7')
+        await MasqCommon.utils.get(db, 'secretKey')
+      } catch (error) {
+        err = error
+      }
+      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.NO_NONCE, 'Reject if no nonce  is given')
     })
     it('Should reject if a db is not given to list', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
@@ -153,7 +185,7 @@ describe('MasqCommon utils', () => {
     it('Should reject if an encryption key is not given to list', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
-        const db = await MasqCommon.utils.createPromisifiedHyperDB('dB6')
+        const db = await MasqCommon.utils.createPromisifiedHyperDB('dB8')
         await MasqCommon.utils.list(db)
       } catch (error) {
         err = error
