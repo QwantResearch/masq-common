@@ -97,7 +97,6 @@ describe('MasqCommon MasqCommon.utils', () => {
       const list1 = await MasqCommon.utils.list(db, masterKey, nonce, prefix1)
       chai.assert.deepEqual(list1, expected)
       const list2 = await MasqCommon.utils.list(db, masterKey, nonce, prefix2)
-      // chai.assert.lengthOf(Object.keys(list2), 1)
       chai.assert.deepEqual(list2, expected)
       const list3 = await MasqCommon.utils.list(db, masterKey, nonce, prefix3)
       chai.assert.deepEqual(list3, expected)
