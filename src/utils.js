@@ -132,10 +132,7 @@ const list = async (db, encKey, nonce, prefix) => {
   }
   const decList = await Promise.all(list.map(async (elt) => {
     const dec = await decrypt(encKey, elt.value)
-    return {
-      key: dec.key,
-      value: dec.value
-    }
+    return dec
   }))
 
   const reformattedDic = decList.reduce((dic, e) => {
