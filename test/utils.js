@@ -90,15 +90,17 @@ describe('MasqCommon MasqCommon.utils', () => {
       const prefix2 = ('/fav')
       const prefix3 = ('fav')
       const item = { one: '1' }
+      const expected = { 'fav/one': { one: '1' } }
       const db = await MasqCommon.utils.createPromisifiedHyperDB('dB9')
       await MasqCommon.utils.dbReady(db)
       await MasqCommon.utils.put(db, masterKey, nonce, `${prefix1}one`, item)
       const list1 = await MasqCommon.utils.list(db, masterKey, nonce, prefix1)
-      chai.assert.lengthOf(Object.keys(list1), 1)
+      chai.assert.deepEqual(list1, expected)
       const list2 = await MasqCommon.utils.list(db, masterKey, nonce, prefix2)
-      chai.assert.lengthOf(Object.keys(list2), 1)
+      // chai.assert.lengthOf(Object.keys(list2), 1)
+      chai.assert.deepEqual(list2, expected)
       const list3 = await MasqCommon.utils.list(db, masterKey, nonce, prefix3)
-      chai.assert.lengthOf(Object.keys(list3), 1)
+      chai.assert.deepEqual(list3, expected)
     })
 
     it('Should list (export) keys/values, the keys first and last / if exists must be removed', async () => {
