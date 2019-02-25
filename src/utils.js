@@ -130,8 +130,8 @@ const list = async (db, encKey, nonce, prefix) => {
   if (list.length === 1 && list[0].key === '' && list[0].value === null) {
     return {}
   }
-  const decList = await Promise.all(list.map(async (elt) => {
-    const dec = await decrypt(encKey, elt.value)
+  const decList = await Promise.all(list.map((elt) => {
+    const dec = decrypt(encKey, elt.value)
     return dec
   }))
 
