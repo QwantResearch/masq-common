@@ -109,15 +109,28 @@ const deriveBits = async (passPhrase, salt, iterations, hashAlgo) => {
  * Hash of a string or arrayBuffer
  *
  * @param {string | arrayBuffer} msg The message
- * @param {string} [type] The hash name (SHA-256 by default)
  * @param {string} [encodingFormat] The encoding format ('hex' by default, could be 'base64')
- * @returns {Promise<Uint8Array>}   A promise that contains the hash as a Uint8Array
+ * @returns {Promise<String>}   A promise that contains the hash as a String encoded with encodingFormat
  */
-// eslint-disable-next-line no-unused-vars
-const hash256 = async (msg, encodingFormat = 'hex', type = 'SHA-256') => {
+const hash256 = (msg, encodingFormat) => {
+  if (encodingFormat) {
+    _checkEncodingFormat(encodingFormat)
+  }
+  return hashMsg(msg, encodingFormat || 'hex', 'SHA-256')
+}
+
+/**
+ * Hash of a string or arrayBuffer
+ *
+ * @param {string | arrayBuffer} msg The message
+ * @param {string} [encodingFormat] The encoding format ('hex' by default, could be 'base64')
+ * @param {string} [type] The hash name (SHA-256 by default)
+ * @returns {Promise<String>}  A promise that contains the hash as a String encoded with encodingFormat
+ */
+const hashMsg = async (msg, encodingFormat, type = 'SHA-256') => {
   const digest = await window.crypto.subtle.digest(
     {
-      name: 'SHA-256'
+      name: type
     },
     (typeof msg === 'string') ? Buffer.from(msg) : msg
   )
