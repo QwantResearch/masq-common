@@ -17,15 +17,15 @@ describe('MasqCommon crypto', function () {
       chai.assert.lengthOf(iv2, 8, 'Array length is not 8')
     })
     it('Should generate a random buffer with a specific length parameter in hex format', () => {
-      const buf1 = crypto.genRandomBuffer(8, 'hex')
+      const buf1 = crypto.genRandomBufferAsStr(8, 'hex')
       chai.assert.lengthOf(buf1, 16)
     })
     it('Should generate a random buffer with a specific length parameter in base64 format', () => {
-      const buf = crypto.genRandomBuffer(8, 'base64')
+      const buf = crypto.genRandomBufferAsStr(8, 'base64')
       chai.assert.lengthOf(buf, 12)
     })
     it('Should reject if a wrong encoding format is given', () => {
-      const toCall = () => crypto.genRandomBuffer(8, 'base777')
+      const toCall = () => crypto.genRandomBufferAsStr(8, 'base777')
       chai.expect(toCall).to.throw().with.property('type', ERRORS.INVALID_ENCODING_FORMAT)
     })
   })

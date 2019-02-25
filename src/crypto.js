@@ -4,7 +4,12 @@ const _checkEncodingFormat = (format) => {
   if (format !== 'hex' && format !== 'base64') throw new MasqError(ERRORS.INVALID_ENCODING_FORMAT)
 }
 
-const genRandomBuffer = (len = 16, encodingFormat) => {
+const genRandomBuffer = (len = 16) => {
+  const values = window.crypto.getRandomValues(new Uint8Array(len))
+  return Buffer.from(values)
+}
+
+const genRandomBufferAsStr = (len = 16, encodingFormat) => {
   if (encodingFormat) {
     _checkEncodingFormat(encodingFormat)
   }
@@ -181,8 +186,8 @@ const genEncryptedMasterKeyAndNonce = async (passPhrase, salt, iterations, hashA
   const keyEncryptionKey = await deriveKeyFromPassphrase(passPhrase, salt, iterations, hashAlgo)
 
   // Generate the masterKey
-  const masterKey = await genRandomBuffer(16, 'hex')
-  const nonce = await genRandomBuffer(16, 'hex')
+  const masterKey = await genRandomBufferAsStr(16, 'hex')
+  const nonce = await genRandomBufferAsStr(16, 'hex')
   const toBeEncryptedMasterKeyAndNonce = {
     masterKey,
     nonce
@@ -368,6 +373,7 @@ export {
   exportKey,
   genAESKey,
   genRandomBuffer,
+  genRandomBufferAsStr,
   getBuffer,
   decryptMasterKeyAndNonce,
   genEncryptedMasterKeyAndNonce,
