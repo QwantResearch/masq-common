@@ -9,12 +9,12 @@ const genRandomBuffer = (len = 16) => {
   return Buffer.from(values)
 }
 
-const genRandomBufferAsStr = (len = 16, encodingFormat) => {
+const genRandomBufferAsStr = (len = 16, encodingFormat = 'hex') => {
   if (encodingFormat) {
     _checkEncodingFormat(encodingFormat)
   }
-  const values = window.crypto.getRandomValues(new Uint8Array(len))
-  return encodingFormat ? Buffer.from(values).toString(encodingFormat) : Buffer.from(values)
+  const values = genRandomBuffer(len)
+  return Buffer.from(values).toString(encodingFormat)
 }
 
 /**
