@@ -13,8 +13,8 @@ const genRandomBufferAsStr = (len = 16, encodingFormat = 'hex') => {
   if (encodingFormat) {
     _checkEncodingFormat(encodingFormat)
   }
-  const values = genRandomBuffer(len)
-  return Buffer.from(values).toString(encodingFormat)
+  const buf = genRandomBuffer(len)
+  return buf.toString(encodingFormat)
 }
 
 /**
