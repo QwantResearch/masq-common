@@ -60,7 +60,6 @@ describe('MasqCommon utils', () => {
       const masterKey = await crypto.genAESKey()
       const item = { one: '1' }
       const keyName = 'one'
-      // need to check if encryption is ok
       const db = await utils.createPromisifiedHyperDB('dB2')
       await utils.dbReady(db)
       await utils.put(db, masterKey, nonce, keyName, item)
@@ -100,6 +99,7 @@ describe('MasqCommon utils', () => {
       const prefix1 = ('/fav/')
       const prefix2 = ('/fav')
       const prefix3 = ('fav')
+      const prefix4 = ('/fav//')
       const item = { one: '1' }
       const expected = { 'fav/one': { one: '1' } }
       const db = await utils.createPromisifiedHyperDB('dB9')
@@ -111,6 +111,8 @@ describe('MasqCommon utils', () => {
       chai.assert.deepEqual(list2, expected)
       const list3 = await utils.list(db, masterKey, nonce, prefix3)
       chai.assert.deepEqual(list3, expected)
+      const list4 = await utils.list(db, masterKey, nonce, prefix4)
+      chai.assert.deepEqual(list4, expected)
     })
 
     it('Should list (export) keys/values, the keys first and last / if exists must be removed', async () => {
