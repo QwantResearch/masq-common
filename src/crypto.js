@@ -1,8 +1,20 @@
 import { ERRORS, checkObject, MasqError } from './errors'
 
+const _checkEncodingFormat = (format) => {
+  if (format !== 'hex' && format !== 'base64') throw new MasqError(ERRORS.INVALID_ENCODING_FORMAT)
+}
+
 const genRandomBuffer = (len = 16) => {
   const values = window.crypto.getRandomValues(new Uint8Array(len))
   return Buffer.from(values)
+}
+
+const genRandomBufferAsStr = (len = 16, encodingFormat = 'hex') => {
+  if (encodingFormat) {
+    _checkEncodingFormat(encodingFormat)
+  }
+  const buf = genRandomBuffer(len)
+  return buf.toString(encodingFormat)
 }
 
 /**
@@ -21,10 +33,10 @@ const getBuffer = (arr) => {
 }
 
 /**
- @typedef protectedMasterKey
+ @typedef protectedMasterKeyAndNonce
  @type {Object}
  @property {derivationParams} derivationParams - The derivation params.
- @property {encryptedMasterKey} encryptedMasterKey - The encrypted masterKey
+ @property {encryptedMasterKeyAndNonce} encryptedMasterKeyAndNonce - The encrypted masterKey and nonce
  */
 
 /**
@@ -36,16 +48,21 @@ const getBuffer = (arr) => {
  */
 
 /**
- @typedef HashedPassphrase
+ @typedef keyEncryptionKey
  @type {Object}
- @property {string} storedHash - The hash of the derived key (format: hex string)
- @property {string} hashAlgo - The hash algo for the PBKDF2 and the final hash to store it
- @property {sring} salt - The salt used to derive the key (format: hex string)
- @property {Number} iterations - The iteration # used during key derivation
+ @property {Object} derivationParams - The derivation parmaeters
+ @property {Cryptokey} key - The key encryption key (used to protect the MasterKey)
  */
 
 /**
- @typedef encryptedMasterKey
+ @typedef masterKeyAndNonce
+ @type {Object}
+ @property {string} masterKey - The master key (hex format)
+ @property {string} nonce - The nonce used to protect the keys in hyperdb
+ */
+
+/**
+ @typedef encryptedMasterKeyAndNonce
  @type {Object}
  @property {string} iv - The iv used to encrypt the masterKey (format: hex string)
  @property {string} ciphertext - The encrypted masterKey (format: hex string)
@@ -97,25 +114,42 @@ const deriveBits = async (passPhrase, salt, iterations, hashAlgo) => {
  * Hash of a string or arrayBuffer
  *
  * @param {string | arrayBuffer} msg The message
- * @param {string} [type] The hash name (SHA-256 by default)
- * @returns {Promise<Uint8Array>}   A promise that contains the hash as a Uint8Array
+ * @param {string} [encodingFormat] The encoding format ('hex' by default, could be 'base64')
+ * @returns {Promise<String>}   A promise that contains the hash as a String encoded with encodingFormat
  */
-// eslint-disable-next-line no-unused-vars
-const hash256 = async (msg, type = 'SHA-256') => {
-  const digest = await window.crypto.subtle.digest(
-    {
-      name: 'SHA-256'
-    },
-    (typeof msg === 'string') ? Buffer.from(msg) : msg
-  )
-  return new Uint8Array(digest)
+const hash256 = (msg, encodingFormat) => {
+  if (encodingFormat) {
+    _checkEncodingFormat(encodingFormat)
+  }
+  return hashMsg(msg, encodingFormat || 'hex', 'SHA-256')
 }
 
 /**
- * Derive a passphrase and return the object to store
+ * Hash of a string or arrayBuffer
+ *
+ * @param {string | arrayBuffer} msg The message
+ * @param {string} [encodingFormat] The encoding format ('hex' by default, could be 'base64')
+ * @param {string} [type] The hash name (SHA-256 by default)
+ * @returns {Promise<String>}  A promise that contains the hash as a String encoded with encodingFormat
+ */
+const hashMsg = async (msg, encodingFormat, type = 'SHA-256') => {
+  const digest = await window.crypto.subtle.digest(
+    {
+      name: type
+    },
+    (typeof msg === 'string') ? Buffer.from(msg) : msg
+  )
+  return Buffer.from(digest).toString(encodingFormat)
+}
+
+/**
+ * Derive a key based on a given passphrase
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
- * @returns {Promise<HashedPassphrase>}   A promise that contains the derived key
+ * @param {arrayBuffer} [salt] The salt
+ * @param {Number} [iterations] The iterations number
+ * @param {string} [hashAlgo] The hash function used for derivation and final hash computing
+ * @returns {Promise<keyEncryptionKey>}   A promise that contains the derived key and derivation parameters
  */
 const deriveKeyFromPassphrase = async (passPhrase, salt, iterations, hashAlgo) => {
   _checkPassphrase(passPhrase)
@@ -136,29 +170,37 @@ const deriveKeyFromPassphrase = async (passPhrase, salt, iterations, hashAlgo) =
 }
 
 /**
- * Derive the passphrase with PBKDF2
+ * Derive the passphrase with PBKDF2 to obtain a KEK
  * Generate a AES key (masterKey)
- * Encrypt the masterKey
+ * Encrypt the masterKey with the KEK
+ * Generate a nonce and encrypt it also with the KEK
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
  * @param {arrayBuffer} [salt] The salt
  * @param {Number} [iterations] The iterations number
  * @param {string} [hashAlgo] The hash function used for derivation and final hash computing
- * @returns {Promise<Uint8Array>}   A promise that contains the hashed derived key
+ * @returns {Promise<protectedMasterKeyAndNonce>}   A promise that contains the hashed derived key
  */
-const genEncryptedMasterKey = async (passPhrase, salt, iterations, hashAlgo) => {
+const genEncryptedMasterKeyAndNonce = async (passPhrase, salt, iterations, hashAlgo) => {
   // derive key encryption key from passphrase
   const keyEncryptionKey = await deriveKeyFromPassphrase(passPhrase, salt, iterations, hashAlgo)
 
   // Generate the masterKey
-  const masterKey = await genRandomBuffer(16)
-  const encryptedMasterKey = await encrypt(keyEncryptionKey.key, Buffer.from(masterKey).toString('hex'))
+  const masterKey = await genRandomBufferAsStr(16, 'hex')
+  const nonce = await genRandomBufferAsStr(16, 'hex')
+  const toBeEncryptedMasterKeyAndNonce = {
+    masterKey,
+    nonce
+  }
+
+  const encryptedMasterKeyAndNonce = await encrypt(keyEncryptionKey.key, toBeEncryptedMasterKeyAndNonce)
+
   return {
     derivationParams: keyEncryptionKey.derivationParams,
-    encryptedMasterKey
+    encryptedMasterKeyAndNonce
   }
 }
-const requiredParameterProtectedMasterKey = ['encryptedMasterKey', 'derivationParams']
+const requiredParameterProtectedMasterKeyAndNonce = ['encryptedMasterKeyAndNonce', 'derivationParams']
 
 /**
  * Derive a given key by deriving
@@ -166,19 +208,22 @@ const requiredParameterProtectedMasterKey = ['encryptedMasterKey', 'derivationPa
  * given passphrase and derivation params.
  *
  * @param {string | arrayBuffer} passPhrase The passphrase that is used to derive the key
- * @param {protectedMasterKey} protectedMasterKey - The same object returned by genEncryptedMasterKey
- * @returns {Promise<Uint8Array>}   A promise that contains the masterKey
+ * @param {protectedMasterKeyAndNonce} protectedMasterKeyAndNonce - The same object returned by genEncryptedMasterKey
+ * @returns {Promise<masterKeyAndNonce>}   A promise that contains the masterKey and the nonce
  */
-const decryptMasterKey = async (passPhrase, protectedMasterKey) => {
-  checkObject(protectedMasterKey, requiredParameterProtectedMasterKey)
-  const { derivationParams, encryptedMasterKey } = protectedMasterKey
+const decryptMasterKeyAndNonce = async (passPhrase, protectedMasterKeyAndNonce) => {
+  checkObject(protectedMasterKeyAndNonce, requiredParameterProtectedMasterKeyAndNonce)
+  const { derivationParams, encryptedMasterKeyAndNonce } = protectedMasterKeyAndNonce
   const { salt, iterations, hashAlgo } = derivationParams
   const _salt = typeof (salt) === 'string' ? Buffer.from(salt, ('hex')) : salt
   try {
     const derivedKey = await deriveBits(passPhrase, _salt, iterations, hashAlgo)
     const keyEncryptionKey = await importKey(derivedKey)
-    const masterKeyHex = await decrypt(keyEncryptionKey, encryptedMasterKey)
-    return Buffer.from(masterKeyHex, 'hex')
+    const encryptedMasterKeyAndNonceHex = await decrypt(keyEncryptionKey, encryptedMasterKeyAndNonce)
+    return {
+      masterKey: Buffer.from(encryptedMasterKeyAndNonceHex.masterKey, 'hex'),
+      nonce: encryptedMasterKeyAndNonceHex.nonce
+    }
   } catch (error) {
     throw new MasqError(ERRORS.WRONG_PASSPHRASE)
   }
@@ -226,7 +271,6 @@ const importKey = (key, type = 'raw', mode = 'AES-GCM') => {
 
 /**
  * Decrypt buffer
- *
  * @param {ArrayBuffer} key - The AES CryptoKey
  * @param {ArrayBuffer} data - Data to decrypt
  * @param {Object} cipherContext - The AES cipher parameters
@@ -329,7 +373,9 @@ export {
   exportKey,
   genAESKey,
   genRandomBuffer,
+  genRandomBufferAsStr,
   getBuffer,
-  decryptMasterKey,
-  genEncryptedMasterKey
+  decryptMasterKeyAndNonce,
+  genEncryptedMasterKeyAndNonce,
+  hash256
 }

@@ -1,4 +1,5 @@
 const ERRORS = {
+  INVALID_ENCODING_FORMAT: 'Supported encoding formats: hex and base64',
   UNDEFINED_ERROR: 'Error with undefined type',
   WRONG_PARAMETER: 'The given object has wrong properties',
   WRONG_FUNCTION_ARGUMENTS: 'Wrong function arguments',
@@ -12,6 +13,7 @@ const ERRORS = {
   INVALID_KEY: 'Invalid key',
   INVALID_CRYPTOKEY: 'Invalid crypto key',
   NO_DB: 'No DB provided',
+  NO_NONCE: 'No nonce provided',
   NO_ENCRYPTION_KEY: 'No encryption key provided',
   MISSING_PROFILE_ID: 'Misssing profile id',
   MISSING_RESOURCE_ID: 'Missing resource id',
