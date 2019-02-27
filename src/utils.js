@@ -107,7 +107,6 @@ const put = async (db, encKey, nonce, key, value) => {
   }
   const enc = await encrypt(encKey, withKeyName)
   const hashedKey = await hashKey(key, nonce)
-  // console.log('put', key, hashedKey)
 
   return db.putAsync(hashedKey, enc)
 }
