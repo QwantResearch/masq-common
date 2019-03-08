@@ -72,6 +72,34 @@ describe('MasqCommon utils', () => {
       chai.assert.exists(enc.ciphertext)
     })
 
+    it('Should delete keys ', async () => {
+      const masterKey = await crypto.genAESKey()
+      const item = { one: '1' }
+      const item2 = { two: '2' }
+      const item3 = { three: '3' }
+      const prefix = 'players'
+      const db = await utils.createPromisifiedHyperDB('dB11')
+      await utils.dbReady(db)
+      await utils.put(db, masterKey, nonce, `${prefix}/one`, item)
+      await utils.put(db, masterKey, nonce, `${prefix}/two`, item2)
+      await utils.put(db, masterKey, nonce, `${prefix}/three`, item3)
+      await utils.del(db, masterKey, nonce, `${prefix}/one`)
+      const dec = await utils.get(db, masterKey, nonce, `${prefix}/one`)
+      chai.assert.deepEqual(dec, null)
+      const list = await utils.list(db, masterKey, nonce, prefix)
+      chai.assert.lengthOf(Object.keys(list), 2)
+      // just to show that a delete of a prefix does not do anything.
+      await utils.del(db, masterKey, nonce, `${prefix}`)
+      const list2 = await utils.list(db, masterKey, nonce, prefix)
+      chai.assert.lengthOf(Object.keys(list2), 2)
+      await utils.del(db, masterKey, nonce, `${prefix}/two`)
+      const list3 = await utils.list(db, masterKey, nonce, prefix)
+      chai.assert.lengthOf(Object.keys(list3), 1)
+      await utils.del(db, masterKey, nonce, `${prefix}`)
+      const list4 = await utils.list(db, masterKey, nonce, prefix)
+      chai.assert.lengthOf(Object.keys(list4), 1)
+    })
+
     it('Should list (export) keys/values or return {} if empty', async () => {
       const masterKey = await crypto.genAESKey()
       const prefix = ('/fav/')
