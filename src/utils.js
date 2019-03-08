@@ -90,7 +90,6 @@ const put = async (db, encKey, nonce, key, value) => {
   if (!db) throw new MasqError(ERRORS.NO_DB)
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
   if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
-
   let sanitizedKey = key
 
   if (sanitizedKey[0] === '/') {
@@ -112,6 +111,23 @@ const put = async (db, encKey, nonce, key, value) => {
 }
 
 /**
+   * Delete a key/value
+   * @param {Object} db - The hyperDB instance
+   * @param {CryptoKey} enckey - The enc/dec AES key
+   * @param {string} nonce - The nonce as hex string
+   * @param {string} key - The key name
+   * @returns {Promise}
+   */
+const del = async (db, encKey, nonce, key) => {
+  if (!db) throw new MasqError(ERRORS.NO_DB)
+  if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
+  if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
+
+  const hashedKey = await hashKey(key, nonce)
+  return db.delAsync(hashedKey)
+}
+
+/**
    * List all keys and values
    * @param {Object} db - The hyperDB instance
    * @param {CryptoKey} enckey - The enc/dec AES key
@@ -124,8 +140,9 @@ const list = async (db, encKey, nonce, prefix) => {
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
   if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
 
-  const _prefix = prefix ? hashKey(prefix, nonce) : '/'
+  const _prefix = prefix ? await hashKey(prefix, nonce) : '/'
   const list = await db.listAsync(_prefix)
+
   if (list.length === 1 && list[0].key === '' && list[0].value === null) {
     return {}
   }
@@ -162,6 +179,7 @@ export {
   createPromisifiedHyperDB,
   get,
   put,
+  del,
   list,
   hashKey
 }
