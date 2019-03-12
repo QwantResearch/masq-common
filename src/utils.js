@@ -44,10 +44,6 @@ function dbExists (dbName) {
   })
 }
 
-const _isValideDbKeyName = (key) => {
-  return !((key === undefined || key === null))
-}
-
 /**
  *
  * @param {string} key - The key (/prefix/key)
@@ -69,7 +65,7 @@ const hashKey = async (key, nonce) => {
    * @returns {Promise}
    */
 const get = async (db, encKey, nonce, key) => {
-  if (!_isValideDbKeyName(key)) return null
+  if (key === undefined || key === null) return null
   if (!db) throw new MasqError(ERRORS.NO_DB)
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
   if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
@@ -92,7 +88,7 @@ const get = async (db, encKey, nonce, key) => {
    * @returns {Promise}
    */
 const put = async (db, encKey, nonce, key, value) => {
-  if (!_isValideDbKeyName(key)) return null
+  if (key === undefined || key === null) return null
   if (!db) throw new MasqError(ERRORS.NO_DB)
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
   if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
@@ -125,7 +121,7 @@ const put = async (db, encKey, nonce, key, value) => {
    * @returns {Promise}
    */
 const del = async (db, encKey, nonce, key) => {
-  if (!_isValideDbKeyName(key)) return null
+  if (key === undefined || key === null) return null
   if (!db) throw new MasqError(ERRORS.NO_DB)
   if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
   if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
