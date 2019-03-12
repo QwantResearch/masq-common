@@ -72,6 +72,23 @@ describe('MasqCommon utils', () => {
       chai.assert.exists(enc.ciphertext)
     })
 
+    it('Should delete keys ', async () => {
+      const masterKey = await crypto.genAESKey()
+      const item = { one: '1' }
+      const prefix = 'players'
+      const db = await utils.createPromisifiedHyperDB('dB11')
+      await utils.dbReady(db)
+      await utils.put(db, masterKey, nonce, `${prefix}/one`, item)
+      // just to show that a delete of a prefix does not do anything.
+      await utils.del(db, masterKey, nonce, `${prefix}`)
+      const list = await utils.list(db, masterKey, nonce, prefix)
+      chai.assert.lengthOf(Object.keys(list), 1)
+
+      await utils.del(db, masterKey, nonce, `${prefix}/one`)
+      const list1 = await utils.list(db, masterKey, nonce, prefix)
+      chai.assert.lengthOf(Object.keys(list1), 0)
+    })
+
     it('Should list (export) keys/values or return {} if empty', async () => {
       const masterKey = await crypto.genAESKey()
       const prefix = ('/fav/')
@@ -81,7 +98,6 @@ describe('MasqCommon utils', () => {
       await utils.dbReady(db)
       const emptyList = await utils.list(db, masterKey, nonce)
       chai.assert.lengthOf(Object.keys(emptyList), 0)
-
       const emptyListWithPrefix = await utils.list(db, masterKey, nonce, prefix)
       chai.assert.lengthOf(Object.keys(emptyListWithPrefix), 0)
 
@@ -129,10 +145,15 @@ describe('MasqCommon utils', () => {
       chai.assert.deepEqual(list, expected)
     })
 
+    it('Should return null if the given key is null or undefined', async () => {
+      const expected = null
+      chai.assert.equal(await utils.get('', '', '', undefined), expected)
+    })
+
     it('Should reject if a db is not given to put', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
-        await utils.put()
+        await utils.put(undefined, '', '', '')
       } catch (error) {
         err = error
       }
@@ -143,7 +164,7 @@ describe('MasqCommon utils', () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
         const db = await utils.createPromisifiedHyperDB('dB5')
-        await utils.put(db)
+        await utils.put(db, undefined, '', '')
       } catch (error) {
         err = error
       }
@@ -153,7 +174,7 @@ describe('MasqCommon utils', () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
         const db = await utils.createPromisifiedHyperDB('dB5')
-        await utils.put(db, 'secretKey')
+        await utils.put(db, 'secretKey', undefined, '')
       } catch (error) {
         err = error
       }
@@ -162,7 +183,7 @@ describe('MasqCommon utils', () => {
     it('Should reject if a db is not given to get/ or is not an hyperDB instance', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
-        await utils.get()
+        await utils.get(undefined, '', '', '')
       } catch (error) {
         err = error
       }
@@ -172,7 +193,7 @@ describe('MasqCommon utils', () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
         const db = await utils.createPromisifiedHyperDB('dB6')
-        await utils.get(db)
+        await utils.get(db, undefined, '', '')
       } catch (error) {
         err = error
       }
@@ -182,7 +203,7 @@ describe('MasqCommon utils', () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
         const db = await utils.createPromisifiedHyperDB('dB7')
-        await utils.get(db, 'secretKey')
+        await utils.get(db, 'secretKey', undefined, '')
       } catch (error) {
         err = error
       }
