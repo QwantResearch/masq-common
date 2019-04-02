@@ -44,6 +44,30 @@ describe('MasqCommon crypto', function () {
       chai.assert.exists(encryptedMasterKeyAndNonce.ciphertext)
     })
 
+    it('Should update the passphrase but keep the same MK and nonce ', async () => {
+      const newPassphrase = 'newPassphrase'
+      const protectedMasterKey = await crypto.genEncryptedMasterKeyAndNonce(passphrase)
+      const { derivationParams, encryptedMasterKeyAndNonce } = protectedMasterKey
+      const { iterations, hashAlgo } = derivationParams
+      chai.assert.equal(hashAlgo, 'SHA-256', 'Default hash algo is SHA-256')
+      chai.assert.equal(iterations, 100000, 'Default iteration is 100000')
+
+      const { masterKey, nonce } = await crypto.decryptMasterKeyAndNonce(passphrase, protectedMasterKey)
+
+      const protectedMasterKeyNewPass = await await crypto.updateMasterKeyAndNonce(passphrase, newPassphrase, protectedMasterKey)
+      const masterKeyEncWithNewPass = protectedMasterKeyNewPass.encryptedMasterKeyAndNonce
+      const decryptedMKAndNonceNewPass = await crypto.decryptMasterKeyAndNonce(newPassphrase, protectedMasterKeyNewPass)
+
+      // Check if ciphertexts are not the same
+      chai.assert.notEqual(encryptedMasterKeyAndNonce.ciphertext, masterKeyEncWithNewPass.ciphertext)
+      chai.assert.equal(protectedMasterKeyNewPass.derivationParams.hashAlgo, 'SHA-256', 'Default hash algo is SHA-256')
+      chai.assert.equal(protectedMasterKeyNewPass.derivationParams.iterations, 100000, 'Default iteration is 100000')
+
+      // Check if the masterkey and nonce are the same
+      chai.assert.equal(decryptedMKAndNonceNewPass.masterKey.toString('hex'), masterKey.toString('hex'))
+      chai.assert.equal(decryptedMKAndNonceNewPass.nonce, nonce)
+    })
+
     it('Should reject if passphrase is not a string or is empty', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
       try {
