@@ -200,6 +200,7 @@ const genEncryptedMasterKeyAndNonce = async (passPhrase, salt, iterations, hashA
     encryptedMasterKeyAndNonce
   }
 }
+
 const requiredParameterProtectedMasterKeyAndNonce = ['encryptedMasterKeyAndNonce', 'derivationParams']
 
 /**
@@ -226,6 +227,36 @@ const decryptMasterKeyAndNonce = async (passPhrase, protectedMasterKeyAndNonce) 
     }
   } catch (error) {
     throw new MasqError(ERRORS.WRONG_PASSPHRASE)
+  }
+}
+
+/**
+ * Update the KEK based on the new passphrase from user
+ * Note: the MK and the nonce must not be changed!
+ *
+ * @param {string | arrayBuffer} currentPassPhrase The current (old) passphrase that is used to derive the key
+ * @param {string | arrayBuffer} newPassPhrase The new passphrase that will be used to derive the key
+ * @param {protectedMasterKeyAndNonce} protectedMasterKeyAndNonce - The same object returned by genEncryptedMasterKey for the old passphrase
+ * @returns {Promise<protectedMasterKeyAndNonce>}
+ */
+const updateMasterKeyAndNonce = async (currentPassPhrase, newPassPhrase, protectedMasterKeyAndNonce) => {
+  const { masterKey, nonce } = await decryptMasterKeyAndNonce(currentPassPhrase, protectedMasterKeyAndNonce)
+  // derive a new key encryption key from newPassPhrase
+  const keyEncryptionKey = await deriveKeyFromPassphrase(newPassPhrase)
+
+  // Use existing masterKey and nonce
+  // Because masterKey is a buffer, we encode it as a hex string.
+  // The nonce is already as a hex string
+  const toBeEncryptedMasterKeyAndNonce = {
+    masterKey: masterKey.toString('hex'),
+    nonce
+  }
+
+  const encryptedMasterKeyAndNonce = await encrypt(keyEncryptionKey.key, toBeEncryptedMasterKeyAndNonce)
+
+  return {
+    derivationParams: keyEncryptionKey.derivationParams,
+    encryptedMasterKeyAndNonce
   }
 }
 
@@ -377,5 +408,6 @@ export {
   getBuffer,
   decryptMasterKeyAndNonce,
   genEncryptedMasterKeyAndNonce,
+  updateMasterKeyAndNonce,
   hash256
 }
