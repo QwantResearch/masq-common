@@ -235,9 +235,9 @@ const decryptMasterKeyAndNonce = async (passPhrase, protectedMasterKeyAndNonce) 
  * Note: the MK and the nonce must not be changed!
  *
  * @param {string | arrayBuffer} currentPassPhrase The current (old) passphrase that is used to derive the key
- * @param {string | arrayBuffer} newPassPhrase The current (old) passphrase that is used to derive the key
- * @param {protectedMasterKeyAndNonce} protectedMasterKeyAndNonce - The same object returned by genEncryptedMasterKey
- * @returns {Promise<protectedMasterKeyAndNonce>}   A promise that contains the hashed derived key
+ * @param {string | arrayBuffer} newPassPhrase The new passphrase that will be used to derive the key
+ * @param {protectedMasterKeyAndNonce} protectedMasterKeyAndNonce - The same object returned by genEncryptedMasterKey for the old passphrase
+ * @returns {Promise<protectedMasterKeyAndNonce>}  
  */
 const updateMasterKeyAndNonce = async (currentPassPhrase, newPassPhrase, protectedMasterKeyAndNonce) => {
   const { masterKey, nonce } = await decryptMasterKeyAndNonce(currentPassPhrase, protectedMasterKeyAndNonce)
