@@ -1,5 +1,5 @@
 import { encrypt, decrypt, hash256 } from './crypto'
-import { ERRORS, MasqError } from './errors'
+import { MasqError } from './errors'
 import { promisify } from 'es6-promisify'
 const hyperdb = require('hyperdb')
 const rai = require('random-access-idb')
@@ -66,9 +66,9 @@ const hashKey = async (key, nonce) => {
    */
 const get = async (db, encKey, nonce, key) => {
   if (key === undefined || key === null) return null
-  if (!db) throw new MasqError(ERRORS.NO_DB)
-  if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
-  if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
+  if (!db) throw new MasqError(MasqError.NO_DB)
+  if (!encKey) throw new MasqError(MasqError.NO_ENCRYPTION_KEY)
+  if (!nonce) throw new MasqError(MasqError.NO_NONCE)
   const hashedKey = await hashKey(key, nonce)
 
   const node = await db.getAsync(hashedKey)
@@ -89,9 +89,10 @@ const get = async (db, encKey, nonce, key) => {
    */
 const put = async (db, encKey, nonce, key, value) => {
   if (key === undefined || key === null) return null
-  if (!db) throw new MasqError(ERRORS.NO_DB)
-  if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
-  if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
+  if (!db) throw new MasqError(MasqError.NO_DB)
+  if (!encKey) throw new MasqError(MasqError.NO_ENCRYPTION_KEY)
+  if (!nonce) throw new MasqError(MasqError.NO_NONCE)
+
   let sanitizedKey = key
 
   if (sanitizedKey[0] === '/') {
@@ -122,9 +123,9 @@ const put = async (db, encKey, nonce, key, value) => {
    */
 const del = async (db, encKey, nonce, key) => {
   if (key === undefined || key === null) return null
-  if (!db) throw new MasqError(ERRORS.NO_DB)
-  if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
-  if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
+  if (!db) throw new MasqError(MasqError.NO_DB)
+  if (!encKey) throw new MasqError(MasqError.NO_ENCRYPTION_KEY)
+  if (!nonce) throw new MasqError(MasqError.NO_NONCE)
 
   const hashedKey = await hashKey(key, nonce)
   return db.delAsync(hashedKey)
@@ -140,13 +141,12 @@ const del = async (db, encKey, nonce, key) => {
    */
 const list = async (db, encKey, nonce, prefix) => {
   if (prefix === null) return null
-  if (!db) throw new MasqError(ERRORS.NO_DB)
-  if (!encKey) throw new MasqError(ERRORS.NO_ENCRYPTION_KEY)
-  if (!nonce) throw new MasqError(ERRORS.NO_NONCE)
+  if (!db) throw new MasqError(MasqError.NO_DB)
+  if (!encKey) throw new MasqError(MasqError.NO_ENCRYPTION_KEY)
+  if (!nonce) throw new MasqError(MasqError.NO_NONCE)
 
   const _prefix = prefix ? await hashKey(prefix, nonce) : '/'
   const list = await db.listAsync(_prefix)
-
   if (list.length === 1 && list[0].key === '' && list[0].value === null) {
     return {}
   }

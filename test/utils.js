@@ -3,7 +3,8 @@
 /* global chai */
 /* eslint no-undef: "off" */
 
-const { utils } = MasqCommon
+const { utils, errors } = MasqCommon
+const MasqError = errors.MasqError
 
 describe('MasqCommon utils', () => {
   // track created databases to be able to delete them after each tests
@@ -158,7 +159,7 @@ describe('MasqCommon utils', () => {
         err = error
       }
 
-      chai.assert.equal(err.type, ERRORS.NO_DB, 'Reject if no db is given') // eslint no-unused-vars
+      chai.assert.equal(err.code, MasqError.NO_DB, 'Reject if no db is given') // eslint no-unused-vars
     })
     it('Should reject if an encryption key is not given to put', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
@@ -168,7 +169,7 @@ describe('MasqCommon utils', () => {
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, ERRORS.NO_ENCRYPTION_KEY, 'Reject if no encryption key  is given')
+      chai.assert.equal(err.code, MasqError.NO_ENCRYPTION_KEY, 'Reject if no encryption key  is given')
     })
     it('Should reject if an nonce is not given to put', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
@@ -178,7 +179,7 @@ describe('MasqCommon utils', () => {
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, ERRORS.NO_NONCE, 'Reject if no nonce key  is given')
+      chai.assert.equal(err.code, MasqError.NO_NONCE, 'Reject if no nonce key  is given')
     })
     it('Should reject if a db is not given to get/ or is not an hyperDB instance', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
@@ -187,7 +188,7 @@ describe('MasqCommon utils', () => {
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, ERRORS.NO_DB, 'Reject if no db is given')
+      chai.assert.equal(err.code, MasqError.NO_DB, 'Reject if no db is given')
     })
     it('Should reject if an encryption key is not given to get', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
@@ -197,7 +198,7 @@ describe('MasqCommon utils', () => {
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, ERRORS.NO_ENCRYPTION_KEY, 'Reject if no encryption key  is given')
+      chai.assert.equal(err.code, MasqError.NO_ENCRYPTION_KEY, 'Reject if no encryption key  is given')
     })
     it('Should reject if a nonce is not given to get', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
@@ -207,7 +208,7 @@ describe('MasqCommon utils', () => {
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, ERRORS.NO_NONCE, 'Reject if no nonce  is given')
+      chai.assert.equal(err.code, MasqError.NO_NONCE, 'Reject if no nonce  is given')
     })
     it('Should reject if a db is not given to list', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
@@ -216,7 +217,7 @@ describe('MasqCommon utils', () => {
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, ERRORS.NO_DB, 'Reject if no db is given')
+      chai.assert.equal(err.code, MasqError.NO_DB, 'Reject if no db is given')
     })
     it('Should reject if an encryption key is not given to list', async () => {
       let err = { type: '_ERROR_NOT_THROWN_' }
@@ -226,7 +227,7 @@ describe('MasqCommon utils', () => {
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, MasqCommon.errors.ERRORS.NO_ENCRYPTION_KEY, 'Reject if no encryption key  is given')
+      chai.assert.equal(err.code, MasqError.NO_ENCRYPTION_KEY, 'Reject if no encryption key  is given')
     })
   })
 })
