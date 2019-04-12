@@ -1,9 +1,7 @@
-// import { MasqError } from '../src/errors'
-
 /* eslint-env mocha */
 /* global MasqCommon */
 /* global chai */
-const { WRONG_PARAMETER } = MasqCommon.errors.ERRORS
+const { WRONG_PARAMETER } = MasqCommon.errors.MasqError
 const { checkObject } = MasqCommon.errors
 const requiredParameters = ['age', 'name']
 
@@ -32,12 +30,12 @@ describe('MasqCommon errors', () => {
     it('Should throw if any property is not set ', async () => {
       const myObj = { age: 18 }
       const toCall = () => checkObject(myObj, requiredParameters)
-      chai.expect(toCall).to.throw().with.property('type', WRONG_PARAMETER)
+      chai.expect(toCall).to.throw().with.property('code', WRONG_PARAMETER)
     })
     it('Should throw if any property is undefined ', async () => {
       const myObj = { name: undefined, age: 18 }
       const toCall = () => checkObject(myObj, requiredParameters)
-      chai.expect(toCall).to.throw().with.property('type', WRONG_PARAMETER)
+      chai.expect(toCall).to.throw().with.property('code', WRONG_PARAMETER)
     })
   })
 })

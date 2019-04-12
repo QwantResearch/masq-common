@@ -2,7 +2,7 @@
 /* global MasqCommon */
 /* global chai */
 
-const { ERRORS } = MasqCommon.errors
+const { MasqError } = MasqCommon.errors
 const { crypto } = MasqCommon
 
 describe('MasqCommon crypto', function () {
@@ -26,7 +26,7 @@ describe('MasqCommon crypto', function () {
     })
     it('Should reject if a wrong encoding format is given', () => {
       const toCall = () => crypto.genRandomBufferAsStr(8, 'base777')
-      chai.expect(toCall).to.throw().with.property('type', ERRORS.INVALID_ENCODING_FORMAT)
+      chai.expect(toCall).to.throw().with.property('code', MasqError.INVALID_ENCODING_FORMAT)
     })
   })
 
@@ -69,13 +69,13 @@ describe('MasqCommon crypto', function () {
     })
 
     it('Should reject if passphrase is not a string or is empty', async () => {
-      let err = { type: '_ERROR_NOT_THROWN_' }
+      let err = { code: '_ERROR_NOT_THROWN_' }
       try {
         await crypto.genEncryptedMasterKeyAndNonce([])
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, ERRORS.INVALID_PASSPHRASE, 'Reject if passphrase is not a string')
+      chai.assert.equal(err.code, MasqError.INVALID_PASSPHRASE, 'Reject if passphrase is not a string')
     })
 
     it('Should return the MK (an Array) and a nonce if the given passphrase is the same as the stored one', async () => {
@@ -105,7 +105,7 @@ describe('MasqCommon crypto', function () {
     })
 
     it('Should reject if the given passphrase is NOT the same as the stored one', async () => {
-      let err = { type: '_ERROR_NOT_THROWN_' }
+      let err = { code: '_ERROR_NOT_THROWN_' }
       try {
         const protectedMK = await crypto.genEncryptedMasterKeyAndNonce(passphrase)
         await crypto.decryptMasterKeyAndNonce(passphrase + 'modifed', protectedMK)
@@ -113,7 +113,7 @@ describe('MasqCommon crypto', function () {
         err = error
       }
 
-      chai.assert.strictEqual(err.type, ERRORS.WRONG_PASSPHRASE, 'Reject if wrong passphrase')
+      chai.assert.strictEqual(err.code, MasqError.WRONG_PASSPHRASE, 'Reject if wrong passphrase')
     })
 
     it('Should reject if the any property of protectedMK is missing or empty', async () => {
@@ -123,7 +123,7 @@ describe('MasqCommon crypto', function () {
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, ERRORS.WRONG_PARAMETER, 'A requried property is missing')
+      chai.assert.equal(err.code, MasqError.WRONG_PARAMETER, 'A requried property is missing')
     })
 
     it('The salt and protectedMK must be different for two consecutive call to genEncryptedMasterKeyAndNonce even with the same passphrase', async () => {
@@ -173,13 +173,13 @@ describe('MasqCommon crypto', function () {
     })
 
     it('Should reject if the key is not a CryptoKey', async () => {
-      let err = { type: '_ERROR_NOT_THROWN_' }
+      let err = { code: '_ERROR_NOT_THROWN_' }
       try {
         await crypto.encrypt([2, 3], { data: 'hello' })
       } catch (error) {
         err = error
       }
-      chai.assert.equal(err.type, ERRORS.INVALID_CRYPTOKEY, 'Reject if given key is not a CryptoKey')
+      chai.assert.equal(err.code, MasqError.INVALID_CRYPTOKEY, 'Reject if given key is not a CryptoKey')
     })
 
     it('Should encrypt a message and encode with default format (hex)', async () => {
@@ -229,7 +229,7 @@ describe('MasqCommon crypto', function () {
       const key = await crypto.genAESKey()
       const ciphertext = await crypto.encrypt(key, message)
 
-      let err = { type: '_ERROR_NOT_THROWN_' }
+      let err = { code: '_ERROR_NOT_THROWN_' }
       try {
         ciphertext.iv = ciphertext.iv.slice(0, 10)
         await crypto.decrypt(key, ciphertext)
@@ -237,14 +237,14 @@ describe('MasqCommon crypto', function () {
         err = error
       }
 
-      chai.assert.equal(err.type, ERRORS.UNABLE_TO_DECRYPT, 'Reject if wrong iv')
+      chai.assert.equal(err.code, MasqError.UNABLE_TO_DECRYPT, 'Reject if wrong iv')
     })
     it('Should fail to decrypt a message with default parameters (wrong key)', async () => {
       const message = { data: 'hello' }
       const key = await crypto.genAESKey()
       const ciphertext = await crypto.encrypt(key, message)
 
-      let err = { type: '_ERROR_NOT_THROWN_' }
+      let err = { code: '_ERROR_NOT_THROWN_' }
       try {
         const key2 = await crypto.genAESKey()
         await crypto.decrypt(key2, ciphertext)
@@ -252,7 +252,7 @@ describe('MasqCommon crypto', function () {
         err = error
       }
 
-      chai.assert.equal(err.type, ERRORS.UNABLE_TO_DECRYPT, 'Reject if wrong key')
+      chai.assert.equal(err.code, MasqError.UNABLE_TO_DECRYPT, 'Reject if wrong key')
     })
   })
 })

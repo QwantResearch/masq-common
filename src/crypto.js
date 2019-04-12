@@ -1,7 +1,7 @@
-import { ERRORS, checkObject, MasqError } from './errors'
+import { checkObject, MasqError } from './errors'
 
 const _checkEncodingFormat = (format) => {
-  if (format !== 'hex' && format !== 'base64') throw new MasqError(ERRORS.INVALID_ENCODING_FORMAT)
+  if (format !== 'hex' && format !== 'base64') throw new MasqError(MasqError.INVALID_ENCODING_FORMAT)
 }
 
 const genRandomBuffer = (len = 16) => {
@@ -70,13 +70,13 @@ const getBuffer = (arr) => {
 
 const _checkPassphrase = (passphrase) => {
   if (typeof passphrase !== 'string' || passphrase === '') {
-    throw new MasqError(ERRORS.INVALID_PASSPHRASE)
+    throw new MasqError(MasqError.INVALID_PASSPHRASE)
   }
 }
 
 const _checkCryptokey = (key) => {
   if (!key.type || key.type !== 'secret') {
-    throw new MasqError(ERRORS.INVALID_CRYPTOKEY)
+    throw new MasqError(MasqError.INVALID_CRYPTOKEY)
   }
 }
 
@@ -226,7 +226,7 @@ const decryptMasterKeyAndNonce = async (passPhrase, protectedMasterKeyAndNonce) 
       nonce: encryptedMasterKeyAndNonceHex.nonce
     }
   } catch (error) {
-    throw new MasqError(ERRORS.WRONG_PASSPHRASE)
+    throw new MasqError(MasqError.WRONG_PASSPHRASE)
   }
 }
 
@@ -318,7 +318,7 @@ const decryptBuffer = async (key, data, cipherContext) => {
     return new Uint8Array(decrypted)
   } catch (e) {
     if (e.message === 'Unsupported state or unable to authenticate data') {
-      throw new MasqError(ERRORS.UNABLE_TO_DECRYPT)
+      throw new MasqError(MasqError.UNABLE_TO_DECRYPT)
     }
   }
 }
@@ -393,7 +393,7 @@ const decrypt = async (key, ciphertext, format = 'hex') => {
     const decrypted = await decryptBuffer(key, context.ciphertext, cipherContext)
     return JSON.parse(Buffer.from(decrypted).toString())
   } catch (error) {
-    throw new MasqError(ERRORS.UNABLE_TO_DECRYPT)
+    throw new MasqError(MasqError.UNABLE_TO_DECRYPT)
   }
 }
 
