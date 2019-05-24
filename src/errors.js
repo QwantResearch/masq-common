@@ -58,7 +58,8 @@ MasqError.messages = {
   PROFILE_NOT_OPENED: 'Not logged in and trying to execute a function only accessible when logged in',
   DISCONNECTED_DURING_LOGIN: 'Disconnected during login procedure',
   SIGNALLING_SERVER_ERROR: 'Could not connect to the signalling server',
-  REPLICATION_SIGNALLING_ERROR: 'Lost connection to signalling server during replication'
+  REPLICATION_SIGNALLING_ERROR: 'Lost connection to signalling server during replication',
+  INVALID_STATE_TRANSITION: 'Invalid state transition'
 }
 
 MasqError.UNDEFINED_ERROR = 'UNDEFINED_ERROR'
@@ -86,6 +87,7 @@ MasqError.PROFILE_NOT_OPENED = 'PROFILE_NOT_OPENED'
 MasqError.DISCONNECTED_DURING_LOGIN = 'DISCONNECTED_DURING_LOGIN'
 MasqError.SIGNALLING_SERVER_ERROR = 'SIGNALLING_SERVER_ERROR'
 MasqError.REPLICATION_SIGNALLING_ERROR = 'REPLICATION_SIGNALLING_ERROR'
+MasqError.INVALID_STATE_TRANSITION = 'INVALID_STATE_TRANSITION'
 
 /**
    * Use this fonction to check if the required parameters
