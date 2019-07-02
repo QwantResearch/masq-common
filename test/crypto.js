@@ -83,7 +83,7 @@ describe('MasqCommon crypto', function () {
       const { masterKey, nonce } = await crypto.decryptMasterKeyAndNonce(passphrase, protectedMK)
 
       chai.assert.exists(masterKey, 'The check operation should return the MK')
-      chai.assert.lengthOf(masterKey, 16, 'Default AES key is 128 bits long ')
+      chai.assert.lengthOf(masterKey, 32, 'Default AES key is 256 bits long ')
       chai.assert.exists(nonce)
       chai.assert.lengthOf(nonce, 32)
     })
