@@ -186,7 +186,7 @@ const genEncryptedMasterKeyAndNonce = async (passPhrase, salt, iterations, hashA
   const keyEncryptionKey = await deriveKeyFromPassphrase(passPhrase, salt, iterations, hashAlgo)
 
   // Generate the masterKey
-  const masterKey = await genRandomBufferAsStr(16, 'hex')
+  const masterKey = await genRandomBufferAsStr(32, 'hex')
   const nonce = await genRandomBufferAsStr(16, 'hex')
   const toBeEncryptedMasterKeyAndNonce = {
     masterKey,
